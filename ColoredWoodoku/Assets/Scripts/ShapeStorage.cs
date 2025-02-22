@@ -52,23 +52,19 @@ public class ShapeStorage : MonoBehaviour
                 continue;
             }
 
-            // 1x1 kareyi sayma
-            if (shape is ColorSquare)
-            {
-                continue;
-            }
-
+            // 🔥 1x1 kareleri de kontrol et!
             if (!shape.IsonStartPosition() && shape.IsAnyOfShapeSquareActive())
             {
+                Debug.Log($"[ShapeStorage] Seçili şekil: {shape.name}");
                 return shape;
             }
         }
 
-        Debug.Log("Ana şekiller yerleştirildi, yeni şekiller çağrılıyor...");
+        Debug.LogError("[ShapeStorage] Seçili bir şekil bulunamadı! 1x1 Kare işlenmiyor olabilir.");
         GameEvents.RequestNewShapeMethod();
-
         return null;
     }
+
 
     private void RequestNewShape()
     {

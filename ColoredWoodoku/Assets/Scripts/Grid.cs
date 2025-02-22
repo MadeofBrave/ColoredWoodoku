@@ -126,11 +126,19 @@ public class NewBehaviourScript : MonoBehaviour
                 gridSquare.Selected = false;
             }
         }
+
         var currentSelectedShape = shapeStorage.GetCurrentSelectedShape();
-        if (currentSelectedShape == null) return;
+        if (currentSelectedShape == null)
+        {
+            Debug.Log("[Grid] Seçili bir şekil bulunamadı! 1x1 Kare işlenmiyor olabilir.");
+            return;
+        }
+
+        Debug.Log($"[Grid] Seçili Şekil: {currentSelectedShape.name}, Toplam Kare Sayısı: {currentSelectedShape.TotalSquareNumber}, Seçili Kareler: {squareIndexes.Count}");
 
         if (currentSelectedShape.TotalSquareNumber != squareIndexes.Count)
         {
+            Debug.Log("[Grid] Seçili kare sayısı ile toplam kare sayısı uyuşmuyor! 1x1 Kare işlenmiyor olabilir.");
             GameEvents.MoveShapetoStartPositionMethod();
             return;
         }
@@ -139,27 +147,40 @@ public class NewBehaviourScript : MonoBehaviour
 
         if (!canPlaceShape)
         {
+            Debug.Log("[Grid] Şekil yerleştirilemez! Uygun kare bulunamadı.");
             GameEvents.MoveShapetoStartPositionMethod();
             return;
         }
+
+        Debug.Log($"[Grid] Şekil yerleştiriliyor... Renk: {currentSelectedShape.shapeColor}");
 
         foreach (var squareIndex in squareIndexes)
         {
             _GridSquares[squareIndex].GetComponent<GridSquare>().PlaceShapeOnBoard(currentSelectedShape.shapeColor);
         }
 
+        if (currentSelectedShape is ColorSquare)
+        {
+            Debug.Log("[Grid] 1x1 Kare için özel işlem yapılıyor...");
+            currentSelectedShape.gameObject.SetActive(false); // Kareyi yok etme, sadece kapat
+        }
+
         bool anyShapeLeft = shapeStorage.ShapeList.Any(shape => shape.IsonStartPosition() && shape.IsAnyOfShapeSquareActive());
 
         if (!anyShapeLeft)
         {
+            Debug.Log("[Grid] Yeni şekil çağrılıyor...");
             GameEvents.RequestNewShapeMethod();
         }
         else
         {
+            Debug.Log("[Grid] Mevcut şekiller kontrol ediliyor...");
             GameEvents.SetShapeInactiveMethod();
         }
+
         CheckIfAnyLineIsCompleted();
     }
+
 
     private int[] GetVerticalLine(int colIndex)
     {
