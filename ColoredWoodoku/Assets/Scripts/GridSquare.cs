@@ -35,13 +35,6 @@ public class GridSquare : MonoBehaviour
         isOccupied = true;
         squareColor = color;
         SetColor(color);
-
-        Debug.Log($"[GridSquare] {SquareIndex} numaralý kareye yerleþtirildi! Yeni renk: {color}");
-
-        if (squareColor != color)
-        {
-            Debug.LogError($"[GridSquare] Renk hatasý! Kareye atanan renk: {squareColor}, Beklenen renk: {color}");
-        }
     }
 
 

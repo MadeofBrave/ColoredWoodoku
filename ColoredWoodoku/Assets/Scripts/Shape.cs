@@ -46,7 +46,7 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
         _shapeactive = true;
 
         System.Random random = new System.Random();
-        shapeColor = (ShapeColor)random.Next(0, 3); 
+        SetColor(shapeColor);
     }
 
     public void SetColor(ShapeColor color)
@@ -65,7 +65,7 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
             {
                 image.sprite = newSprite;
             }
-            
+
         }
     }
 
@@ -190,7 +190,8 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
                 if (shapeData.board[row].column[column])
                 {
                     _currentShape[currentIndexInList].SetActive(true);
-                    _currentShape[currentIndexInList].GetComponent<RectTransform>().localPosition = new Vector2(GetXPositionForShapeSquare(shapeData, column, moveDistance),
+                    _currentShape[currentIndexInList].GetComponent<RectTransform>().localPosition = new Vector2(
+                    GetXPositionForShapeSquare(shapeData, column, moveDistance),
                     GetYPositionForShapeSquare(shapeData, row, moveDistance));
 
                     _currentShape[currentIndexInList].GetComponent<Image>().sprite = GetSprite(shapeColor);
@@ -364,7 +365,6 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
         }
         else
         {
-            Debug.Log("Şekil yerleştirilmedi, başlangıç noktasına geri dönüyor: " + this.name);
             MoveShapetoStartPosition();
         }
     }
@@ -372,7 +372,7 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
 
     public virtual bool CheckIfOneByOneBlockCanBePlaced()
     {
-        bool canPlaceShape = false; 
+        bool canPlaceShape = false;
         GameEvents.CheckIfShapeCanBePlacedMethod();
         canPlaceShape = true;
         return canPlaceShape;

@@ -14,13 +14,15 @@ public static class GameEvents
     public static Shape.ShapeColor LastExplosionColor { get; private set; } = Shape.ShapeColor.None;
 
 
-    public static void SetLastExplosionColorMethod(Shape.ShapeColor color)
-    {
-        LastExplosionColor = color;
-    }
+ public static void SetLastExplosionColorMethod(Shape.ShapeColor color)
+{
+    Debug.Log($"[GameEvents] Son Patlama Rengi Ayarlandý: {color}");
+    LastExplosionColor = color;
+}
+
 
     public static void CheckIfOneByOneCanBePlacedMethod()
-    {   
+    {
         CheckIfOneByOneCanBePlaced?.Invoke();
     }
 
@@ -30,9 +32,6 @@ public static class GameEvents
         {
             return;
         }
-        Debug.Log($"[GameEvents] Patlama gerçekleþti! Yeni renk: {color}");
-        SetLastExplosionColorMethod(color);
-        TriggerOneByOneBlockExplosion?.Invoke(color);
         ShapeStorage.Instance.EnableColorSquare();
     }
 
