@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -80,7 +80,7 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
             case ShapeColor.Yellow:
                 return yellowSprite;
             default:
-                Debug.LogWarning("GetSprite() çaðrýldý ama uygun renk bulunamadý: " + color);
+                Debug.LogWarning("GetSprite() Ã§aÄŸrÄ±ldÄ± ama uygun renk bulunamadÄ±: " + color);
                 return null;
         }
     }
@@ -331,7 +331,7 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
     {
         if (_transform == null || _canvas == null)
         {
-            Debug.LogError("OnDrag sýrasýnda _transform veya _canvas null!");
+            Debug.LogError("OnDrag sÄ±rasÄ±nda _transform veya _canvas null!");
             return;
         }
 
@@ -364,7 +364,7 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
         }
         else
         {
-            Debug.Log("Þekil yerleþtirilmedi, baþlangýç noktasýna geri dönüyor: " + this.name);
+            Debug.Log("Åžekil yerleÅŸtirilmedi, baÅŸlangÄ±Ã§ noktasÄ±na geri dÃ¶nÃ¼yor: " + this.name);
             MoveShapetoStartPosition();
         }
     }
@@ -375,7 +375,6 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
         bool canPlaceShape = false; 
         GameEvents.CheckIfShapeCanBePlacedMethod();
         canPlaceShape = true;
-
         return canPlaceShape;
     }
 

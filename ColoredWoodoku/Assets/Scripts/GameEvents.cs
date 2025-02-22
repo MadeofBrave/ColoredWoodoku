@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 public static class GameEvents
 {
@@ -29,9 +30,10 @@ public static class GameEvents
         {
             return;
         }
-
+        Debug.Log($"[GameEvents] Patlama gerçekleþti! Yeni renk: {color}");
         SetLastExplosionColorMethod(color);
         TriggerOneByOneBlockExplosion?.Invoke(color);
+        ShapeStorage.Instance.EnableColorSquare();
     }
 
 

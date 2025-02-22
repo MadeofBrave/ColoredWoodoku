@@ -30,13 +30,15 @@ public class GridSquare : MonoBehaviour
         int randomColorIndex = Random.Range(0, normalImages.Count); 
         normalImage.sprite = normalImages[randomColorIndex];
     }
+public void PlaceShapeOnBoard(Shape.ShapeColor color)
+{
+    isOccupied = true; // Kare artýk dolu
+    squareColor = color; // Renk atamasý yap
+    SetColor(color);
 
-    public void PlaceShapeOnBoard(Shape.ShapeColor color)
-    {
-        isOccupied = true;
-        squareColor = color;
-        SetColor(color);
-    }
+    Debug.Log($"[GridSquare] Kareye yerleþtirildi! Yeni renk: {color}");
+}
+
 
     private void SetColor(Shape.ShapeColor color)
     {

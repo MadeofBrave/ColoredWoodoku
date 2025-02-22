@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -27,7 +27,7 @@ public class NewBehaviourScript : MonoBehaviour
     {
         SquareOccupied = occupied;
         SquareColor = color;
-        Debug.Log($"Kare Güncellendi -> Doluluk: {SquareOccupied}, Renk: {SquareColor}");
+        Debug.Log($"Kare GÃ¼ncellendi -> Doluluk: {SquareOccupied}, Renk: {SquareColor}");
     }
 
     public void ClearSquare()
@@ -349,7 +349,7 @@ public class NewBehaviourScript : MonoBehaviour
             bool isShapeActive = shape.IsAnyOfShapeSquareActive();
             bool canBePlaced = CheckIfShapeCanBePlacedOnGrid(shape);
 
-            Debug.Log($"Þekil: {shape.name}, Aktif mi: {isShapeActive}, Yerleþebilir mi: {canBePlaced}");
+            Debug.Log($"Åžekil: {shape.name}, Aktif mi: {isShapeActive}, YerleÅŸebilir mi: {canBePlaced}");
 
             if (canBePlaced && isShapeActive)
             {
@@ -358,11 +358,11 @@ public class NewBehaviourScript : MonoBehaviour
             }
         }
 
-        Debug.Log("Geçerli þekil sayýsý: " + validShapes);
+        Debug.Log("GeÃ§erli ÅŸekil sayÄ±sÄ±: " + validShapes);
 
         if (validShapes == 0)
         {
-            Debug.Log("OYUNCU KAYBETTÝ!");
+            Debug.Log("OYUNCU KAYBETTÄ°!");
             GameEvents.GameOverMethod(false);
         }
     }
@@ -394,7 +394,7 @@ public class NewBehaviourScript : MonoBehaviour
 
         foreach (var number in squareList)
         {
-            Debug.Log($"Þekil {currentShape.name} þu kareleri kontrol ediyor: {string.Join(", ", number)}");
+            Debug.Log($"Åžekil {currentShape.name} ÅŸu kareleri kontrol ediyor: {string.Join(", ", number)}");
 
             bool shapeCanBePlacedOnTheBoard = true;
             foreach (var squareIndexToCheck in originalShapeFilledUpSquares)
@@ -408,11 +408,11 @@ public class NewBehaviourScript : MonoBehaviour
 
                 var comp = _GridSquares[number[squareIndexToCheck]].GetComponent<GridSquare>();
 
-                Debug.Log($"Kare index: {number[squareIndexToCheck]}, Doluluk: {comp.SquareOccupied}, Kare Rengi: {comp.squareColor}, Þekil Rengi: {currentShape.shapeColor}");
+                Debug.Log($"Kare index: {number[squareIndexToCheck]}, Doluluk: {comp.SquareOccupied}, Kare Rengi: {comp.squareColor}, Åžekil Rengi: {currentShape.shapeColor}");
 
                 if (comp.SquareOccupied || (comp.squareColor != Shape.ShapeColor.None && comp.squareColor != currentShape.shapeColor))
                 {
-                    Debug.Log($"Þekil {currentShape.name} þu kareye yerleþemez: {number[squareIndexToCheck]}");
+                    Debug.Log($"Åžekil {currentShape.name} ÅŸu kareye yerleÅŸemez: {number[squareIndexToCheck]}");
                     shapeCanBePlacedOnTheBoard = false;
                     break;
                 }
@@ -420,11 +420,12 @@ public class NewBehaviourScript : MonoBehaviour
 
             if (shapeCanBePlacedOnTheBoard)
             {
-                Debug.Log($"Þekil {currentShape.name} için yer bulundu!");
+                Debug.Log($"Åžekil {currentShape.name} iÃ§in yer bulundu!");
                 canBePlaced = true;
                 break;
             }
         }
+        Debug.Log($"[Grid] {currentShape.name} iÃ§in yerleÅŸim kontrol ediliyor: {string.Join(", ", originalShapeFilledUpSquares)}");
 
         Debug.Log($"CheckIfShapeCanBePlacedOnGrid Sonucu: {canBePlaced}");
         return canBePlaced;

@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 public class ShapeStorage : MonoBehaviour
@@ -43,9 +43,8 @@ public class ShapeStorage : MonoBehaviour
         }
 
     }
-
     public Shape GetCurrentSelectedShape()
-    {   
+    {
         foreach (var shape in ShapeList)
         {
             if (!shape.gameObject.activeSelf)
@@ -53,91 +52,76 @@ public class ShapeStorage : MonoBehaviour
                 continue;
             }
 
+            // 1x1 kareyi sayma
+            if (shape is ColorSquare)
+            {
+                continue;
+            }
+
             if (!shape.IsonStartPosition() && shape.IsAnyOfShapeSquareActive())
             {
-                if (!shape.IsAnyOfShapeSquareActive())
-                {
-
-                    if (shape is ColorSquare)
-                    {
-                        return null;
-                    }
-
-                    RequestNewShape();
-                    return null;
-                }
-
                 return shape;
             }
         }
 
-
-        if (GameEvents.LastExplosionColor != Shape.ShapeColor.None)
-        {
-            EnableColorSquare();
-            RequestNewShape();
-        }
-        else
-        {
-            Debug.Log("Patlama yok, 1x1 Kare aktif edilmeyecek.");
-        }
+        Debug.Log("Ana şekiller yerleştirildi, yeni şekiller çağrılıyor...");
+        GameEvents.RequestNewShapeMethod();
 
         return null;
     }
-
-
 
     private void RequestNewShape()
     {
         foreach (var shape in ShapeList)
         {
-            if (shape is ColorSquare)
+            if (shape is ColorSquare colorSquare)
             {
-                ColorSquare colorSquare = shape as ColorSquare;
-                if (colorSquare != null)
+                // Eğer en son patlama olmadıysa 1x1 kareyi oluşturma
+                if (GameEvents.LastExplosionColor == Shape.ShapeColor.None)
                 {
-                    colorSquare.RequestNewShape(shapeData[6]);
-                    colorSquare.shapeColor = GameEvents.LastExplosionColor;
-                    colorSquare.gameObject.SetActive(true);
+                    colorSquare.gameObject.SetActive(false);
+                    continue;
                 }
+
+                // 1x1 kareyi doğru renkte oluştur
+                colorSquare.shapeColor = GameEvents.LastExplosionColor;
+                colorSquare.SetColor(GameEvents.LastExplosionColor);
+                colorSquare.gameObject.SetActive(true);
             }
             else
             {
                 var shapeIndex = UnityEngine.Random.Range(0, shapeData.Count);
+                shape.RequestNewShape(shapeData[shapeIndex]);
 
-                Shape randomShape = shape.GetComponent<Shape>(); 
-                if (randomShape != null)
-                {
-                    shape.shapeColor = randomShape.GetRandomShapeColor(); 
-                }
-                else
-                {
-                    shape.shapeColor = Shape.ShapeColor.None; 
-                }
-
-                shape.RequestNewShape(shapeData[shapeIndex]); 
-                shape.SetColor(shape.shapeColor); 
+                // Şekil rengi yanlış atanıyorsa düzeltelim
+                shape.shapeColor = shape.GetRandomShapeColor();
+                shape.SetColor(shape.shapeColor);
             }
         }
     }
 
 
-    private void EnableColorSquare()
+    public void EnableColorSquare()
     {
-        if (GameEvents.LastExplosionColor == Shape.ShapeColor.None) { 
-        Debug.Log("patlama olmad� �ekil inaktif");
-        return; 
+        if (GameEvents.LastExplosionColor == Shape.ShapeColor.None)
+        {
+            Debug.Log("[ShapeStorage] Patlama yok, 1x1 kare oluşturulmayacak.");
+            return;
         }
 
         foreach (var shape in ShapeList)
         {
             if (shape is ColorSquare colorSquare)
-            { 
-                    colorSquare.gameObject.SetActive(true); 
-                    colorSquare.RequestNewShape(shapeData[6]);
-                    colorSquare.shapeColor = GameEvents.LastExplosionColor; 
-                    colorSquare.CreateShape(shapeData[6]);
-                
+            {
+                Debug.Log($"[ShapeStorage] 1x1 Kare Güncellendi! Yeni Renk: {GameEvents.LastExplosionColor}");
+
+                colorSquare.shapeColor = GameEvents.LastExplosionColor;
+                colorSquare.SetColor(GameEvents.LastExplosionColor);
+
+                if (!colorSquare.gameObject.activeSelf)
+                {
+                    colorSquare.gameObject.SetActive(true);
+                }
             }
         }
     }
