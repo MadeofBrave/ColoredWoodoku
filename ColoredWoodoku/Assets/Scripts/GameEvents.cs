@@ -16,8 +16,7 @@ public static class GameEvents
 
  public static void SetLastExplosionColorMethod(Shape.ShapeColor color)
 {
-    Debug.Log($"[GameEvents] Son Patlama Rengi Ayarlandý: {color}");
-    LastExplosionColor = color;
+        LastExplosionColor = color;
 }
 
 

@@ -225,40 +225,6 @@ public class NewBehaviourScript : MonoBehaviour
         int completedLines = CheckIfSquaresAreCompleted(lines);
     }
 
-    private Shape.ShapeColor GetExplosionColorFromCompletedLines(List<int[]> completedLines)
-    {
-        if (completedLines.Count == 0)
-        {
-            return Shape.ShapeColor.None;
-        }
-
-        Shape.ShapeColor finalColor = Shape.ShapeColor.None;
-        int lastIndex = -1;
-
-        foreach (var line in completedLines)
-        {
-            foreach (var index in line)
-            {
-                if (_GridSquares[index] == null) continue;
-
-                GridSquare square = _GridSquares[index].GetComponent<GridSquare>();
-                if (square != null && square.isOccupied)
-                {
-                    if (index > lastIndex)  
-                    {
-                        lastIndex = index;
-                        finalColor = square.squareColor;
-                    }
-                }
-
-            }
-        }
-
-        return finalColor;
-    }
-
-
-
     private int[] GetHorizontalLine(int rowIndex)
     {
         int[] line = new int[9];
@@ -268,7 +234,6 @@ public class NewBehaviourScript : MonoBehaviour
         }
         return line;
     }
-
     private int CheckIfSquaresAreCompleted(List<int[]> data)
     {
         int linesCompleted = 0;
@@ -281,8 +246,26 @@ public class NewBehaviourScript : MonoBehaviour
             {
                 uniqueLines.Add(lineKey);
 
-                if (CheckLineColors(line))
+                if (CheckLineColors(line)) 
                 {
+                    Shape.ShapeColor explosionColor = Shape.ShapeColor.None;
+
+                    foreach (var index in line)
+                    {
+                        var gridSquare = _GridSquares[index].GetComponent<GridSquare>();
+                        if (gridSquare.isOccupied && gridSquare.squareColor != Shape.ShapeColor.None)
+                        {
+                            explosionColor = gridSquare.squareColor;
+                            break;
+                        }
+                    }
+
+                    if (explosionColor != Shape.ShapeColor.None)
+                    {
+                        GameEvents.SetLastExplosionColorMethod(explosionColor);
+                        Debug.Log($"[Grid] Patlama Rengi Belirlendi: {explosionColor}");
+                    }
+
                     ClearLine(line);
                     linesCompleted++;
                 }
@@ -291,38 +274,11 @@ public class NewBehaviourScript : MonoBehaviour
 
         if (linesCompleted > 0)
         {
-            Shape.ShapeColor explosionColor = GetExplosionColorFromCompletedLines(data);
-            Debug.Log($"[Grid] Belirlenen Patlama Rengi: {explosionColor}");
-
-            GameEvents.SetLastExplosionColorMethod(explosionColor);
-            GameEvents.TriggerOneByOneBlockExplosionMethod(explosionColor);
+            Debug.Log($"[Grid] Belirlenen Patlama Rengi: {GameEvents.LastExplosionColor}");
+            GameEvents.TriggerOneByOneBlockExplosionMethod(GameEvents.LastExplosionColor);
         }
 
         return linesCompleted;
-    }
-
-
-    public GridSquare GetGridSquare(int index)
-    {
-        if (index >= 0 && index < _GridSquares.Count)
-        {
-            return _GridSquares[index].GetComponent<GridSquare>();
-        }
-        return null;
-    }
-
-
-    private bool CheckIfLineIsCompleted(int[] line)
-    {
-        foreach (int index in line)
-        {
-            GridSquare square = _GridSquares[index].GetComponent<GridSquare>();
-            if (square == null || !square.isOccupied)
-            {
-                return false;
-            }
-        }
-        return true;
     }
 
     private bool CheckLineColors(int[] line)

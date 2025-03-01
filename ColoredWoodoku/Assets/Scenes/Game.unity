@@ -828,7 +828,7 @@ RectTransform:
   m_GameObject: {fileID: 867577542}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.1131, y: 1.1131, z: 1.1131}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 220378094}
@@ -840,7 +840,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -749.84}
+  m_AnchoredPosition: {x: 0, y: -920}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &891681294 stripped
@@ -1236,8 +1236,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -6, y: -7}
-  m_SizeDelta: {x: 1080, y: 1920}
+  m_AnchoredPosition: {x: -0.000015712, y: 0}
+  m_SizeDelta: {x: 1080, y: 2316}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1285408181
 MonoBehaviour:
@@ -1521,6 +1521,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: 1x1Square
       objectReference: {fileID: 0}
+    - target: {fileID: 8707689995670166211, guid: 59a5433bb9aba8c45a03ebd8e635c0cb, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 1575712196277989150, guid: 59a5433bb9aba8c45a03ebd8e635c0cb, type: 3}
     m_RemovedGameObjects: []
@@ -1556,7 +1560,7 @@ MonoBehaviour:
   shapeSelectedScale: {x: 0, y: 0}
   offset: {x: 0, y: 700}
   CurrentShapeData: {fileID: 0}
-  shapeColor: 0
+  shapeColor: 2
   blueSprite: {fileID: 21300000, guid: 0b86fa557b0915a45881a65ae36e4ce4, type: 3}
   greenSprite: {fileID: 21300000, guid: 7ee4b69e4d746544287a82af15337c5e, type: 3}
   yellowSprite: {fileID: 21300000, guid: 5623115d78d239a40b2ccec1d698713e, type: 3}
@@ -2097,9 +2101,9 @@ MonoBehaviour:
   m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 946, y: 2048}
+  m_ReferenceResolution: {x: 1080, y: 1920}
   m_ScreenMatchMode: 0
-  m_MatchWidthOrHeight: 0.5
+  m_MatchWidthOrHeight: 0
   m_PhysicalUnit: 3
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
@@ -2189,8 +2193,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -174}
-  m_SizeDelta: {x: 1044.64, y: 145}
+  m_AnchoredPosition: {x: -0.0000042003, y: -197}
+  m_SizeDelta: {x: 1080, y: 162.4}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1904487517
 MonoBehaviour:
