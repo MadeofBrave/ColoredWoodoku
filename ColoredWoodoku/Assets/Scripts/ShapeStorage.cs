@@ -39,7 +39,8 @@ public class ShapeStorage : MonoBehaviour
             }
             if (shape is HammerSquare)
             {
-                shape.CreateShape(shapeData[6]); 
+                shape.CreateShape(shapeData[6]);
+                continue;
             }
             var shapeIndex = UnityEngine.Random.Range(0, shapeData.Count);
             shape.CreateShape(shapeData[shapeIndex]);

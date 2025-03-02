@@ -37,54 +37,22 @@ public class HammerSquare : Shape, IBeginDragHandler, IDragHandler, IEndDragHand
             out pos);
         _rectTransform.localPosition = pos;
     }
-
-    public override void OnEndDrag(PointerEventData eventData)
+    public void OnEndDrag(PointerEventData eventData)
     {
         _canvasGroup.alpha = 1f;
         _canvasGroup.blocksRaycasts = true;
 
-        var currentSelectedShape = ShapeStorage.Instance.GetCurrentSelectedShape();
+        GridSquare targetSquare = FindObjectsOfType<GridSquare>().FirstOrDefault(gs => gs.isOccupied);
 
-        if (currentSelectedShape == null)
+        if (targetSquare != null)
         {
-            Debug.Log("HammerSquare: Þu an seçili bir þekil yok, iþlem yapýlamaz.");
-            MoveShapetoStartPosition();
-            return;
-        }
-
-        List<int> occupiedIndexes = new List<int>();
-
-        foreach (var gridSquare in FindObjectsOfType<GridSquare>())
-        {
-            if (gridSquare.isOccupied)
-            {
-                occupiedIndexes.Add(gridSquare.SquareIndex);
-            }
-        }
-
-        bool shapeCanBePlaced = true;
-
-        foreach (var squareIndex in occupiedIndexes)
-        {
-            var gridSquare = FindObjectsOfType<GridSquare>().FirstOrDefault(gs => gs.SquareIndex == squareIndex);
-            if (gridSquare != null && gridSquare.isOccupied)
-            {
-                gridSquare.ClearSquareWithHammer(); 
-            }
-            else
-            {
-                shapeCanBePlaced = false;
-            }
-        }
-
-        if (shapeCanBePlaced)
-        {
-            Debug.Log("HammerSquare: Þeklin alaný temizlendi!");
+            GameEvents.UseHammerMethod(targetSquare.SquareIndex);
             gameObject.SetActive(false);
+            Debug.Log("HammerSquare: Ýlk bulunan dolu kare temizlendi.");
         }
         else
         {
-            Debug.Log("HammerSquare: Þekil yerleþtirilemez, baþlangýç pozisyonuna dönüyor.");
+            Debug.Log("HammerSquare: Geçerli bir kare bulunamadý, baþlangýç pozisyonuna dönüyor.");
             MoveShapetoStartPosition();
         }
     }

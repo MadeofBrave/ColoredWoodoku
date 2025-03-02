@@ -20,6 +20,7 @@ public class NewBehaviourScript : MonoBehaviour
     public int[,] line_data = new int[9, 9];
     public bool SquareOccupied { get; private set; } = false;
     public Shape.ShapeColor SquareColor { get; private set; } = Shape.ShapeColor.None;
+    public static Grid Instance { get; private set; }
 
     public void SetSquareOccupied(bool occupied, Shape.ShapeColor color)
     {
