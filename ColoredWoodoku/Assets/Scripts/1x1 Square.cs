@@ -1,8 +1,5 @@
-using System.Collections;
-using UnityEngine;
+using System.Collections.Generic;
 using UnityEngine.EventSystems;
-using UnityEngine.UI;
-
 public class ColorSquare : Shape
 {
     public ShapeStorage shapeStorage;
@@ -31,8 +28,30 @@ public class ColorSquare : Shape
 
     public override void OnEndDrag(PointerEventData eventData)
     {
-        bool shapePlaced = CheckIfOneByOneBlockCanBePlaced();
+        PointerEventData pointerEventData = new PointerEventData(EventSystem.current);
+        pointerEventData.position = eventData.position;
 
+        List<RaycastResult> results = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(pointerEventData, results);
+
+        GridSquare gridSquare = null;
+
+        foreach (RaycastResult hitResult in results)
+        {
+            if (hitResult.gameObject.CompareTag("GridSquare"))
+            {
+                gridSquare = hitResult.gameObject.GetComponent<GridSquare>();
+                break;
+            }
+        }
+
+        if (gridSquare != null && gridSquare.isOccupied)
+        {
+            MoveShapetoStartPosition();
+            return;
+        }
+
+        bool shapePlaced = CheckIfOneByOneBlockCanBePlaced();
 
         if (shapePlaced)
         {
@@ -44,4 +63,6 @@ public class ColorSquare : Shape
             MoveShapetoStartPosition();
         }
     }
+
+
 }

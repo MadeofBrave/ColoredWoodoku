@@ -37,6 +37,10 @@ public class ShapeStorage : MonoBehaviour
             {
                 continue; 
             }
+            if (shape is HammerSquare)
+            {
+                shape.CreateShape(shapeData[6]); 
+            }
             var shapeIndex = UnityEngine.Random.Range(0, shapeData.Count);
             shape.CreateShape(shapeData[shapeIndex]);
 
@@ -76,6 +80,10 @@ public class ShapeStorage : MonoBehaviour
 
                 colorSquare.gameObject.SetActive(true);
             }
+            else if (shape is HammerSquare)
+            {
+                shape.RequestNewShape(shapeData[6]); 
+            }
             else
             {
                 var shapeIndex = UnityEngine.Random.Range(0, shapeData.Count);
@@ -101,8 +109,6 @@ public class ShapeStorage : MonoBehaviour
             {
 
                 colorSquare.shapeColor = GameEvents.LastExplosionColor;
-                //colorSquare.SetColor(GameEvents.LastExplosionColor);
-
 
                 if (!colorSquare.gameObject.activeSelf)
                 {

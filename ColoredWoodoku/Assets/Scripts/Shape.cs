@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -14,8 +12,6 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
     protected bool isPlaced = false;
     public Shapedata CurrentShapeData;
     public int TotalSquareNumber { get; set; }
-
-
 
     public enum ShapeColor
     {
@@ -34,7 +30,7 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
     private Vector3 _shapeStartScale;
     private RectTransform _transform;
     private Canvas _canvas;
-    private Vector3 _startPosition;
+    public Vector3 _startPosition;
 
     public bool _shapeactive = true;
     public virtual void Awake()
@@ -92,7 +88,7 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
         GameEvents.SetShapeInactive -= SetShapeInactive;
     }
 
-    private void OnEnable()
+    public void OnEnable()
     {
         SetColor(shapeColor);
         GameEvents.MoveShapetoStartPosition += MoveShapetoStartPosition;

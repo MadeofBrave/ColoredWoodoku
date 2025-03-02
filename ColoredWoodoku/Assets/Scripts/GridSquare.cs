@@ -7,7 +7,7 @@ public class GridSquare : MonoBehaviour
     public Image normalImage;
     public Image hooverImage;
     public Image activeImage;
-    public List<Sprite> normalImages; 
+    public List<Sprite> normalImages;
     public Sprite[] colorSprites;
 
     public Shape.ShapeColor squareColor;
@@ -22,19 +22,36 @@ public class GridSquare : MonoBehaviour
         SetRandomInitialColor();
         Selected = false;
         SquareOccupied = false;
-       
     }
 
     private void SetRandomInitialColor()
     {
-        int randomColorIndex = Random.Range(0, normalImages.Count); 
+        int randomColorIndex = Random.Range(0, normalImages.Count);
         normalImage.sprite = normalImages[randomColorIndex];
     }
+
     public void PlaceShapeOnBoard(Shape.ShapeColor color)
     {
         isOccupied = true;
         squareColor = color;
         SetColor(color);
+    }
+
+    public void ClearSquareWithHammer()
+    {
+        if (isOccupied && squareColor != Shape.ShapeColor.None)
+        {
+            isOccupied = false;
+            squareColor = Shape.ShapeColor.None;
+
+            if (normalImages != null && normalImages.Count > 0)
+            {
+                normalImage.sprite = normalImages[0]; 
+            }
+
+            SquareOccupied = false;
+            Selected = false;
+        }
     }
 
 
@@ -51,7 +68,6 @@ public class GridSquare : MonoBehaviour
             Debug.LogWarning("Color index out of range: " + index);
         }
     }
-
 
     public void ActivateSquare()
     {
@@ -79,7 +95,7 @@ public class GridSquare : MonoBehaviour
         squareColor = default;
         if (normalImages != null && normalImages.Count > 0)
         {
-            normalImage.sprite = normalImages[0]; 
+            normalImage.sprite = normalImages[0];
         }
     }
 

@@ -12,9 +12,14 @@ public static class GameEvents
     public static event Action CheckIfOneByOneCanBePlaced;
     public static event Action<Shape.ShapeColor> TriggerOneByOneBlockExplosion;
     public static Shape.ShapeColor LastExplosionColor { get; private set; } = Shape.ShapeColor.None;
+    public static event Action<int> UseHammer = delegate { };
 
+    public static void UseHammerMethod(int squareIndex)
+    {
+        UseHammer?.Invoke(squareIndex);
+    }
 
- public static void SetLastExplosionColorMethod(Shape.ShapeColor color)
+    public static void SetLastExplosionColorMethod(Shape.ShapeColor color)
 {
         LastExplosionColor = color;
 }

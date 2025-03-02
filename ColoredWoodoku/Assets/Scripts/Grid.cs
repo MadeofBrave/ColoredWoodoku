@@ -17,8 +17,6 @@ public class NewBehaviourScript : MonoBehaviour
     private Vector2 _offset = new Vector2(0.0f, 0.0f);
     private List<GameObject> _GridSquares = new List<GameObject>();
     private LineIndicator _LineIndicator;
-    private Shape shape;
-    private ColorSquare _colorSquare;
     public int[,] line_data = new int[9, 9];
     public bool SquareOccupied { get; private set; } = false;
     public Shape.ShapeColor SquareColor { get; private set; } = Shape.ShapeColor.None;
@@ -38,12 +36,19 @@ public class NewBehaviourScript : MonoBehaviour
     private void OnEnable()
     {
         GameEvents.CheckIfShapeCanBePlaced += CheckIfShapeCanBePlaced;
+        GameEvents.UseHammer += HandleHammerUsage;
 
     }
 
     private void OnDisable()
     {
         GameEvents.CheckIfShapeCanBePlaced -= CheckIfShapeCanBePlaced;
+        GameEvents.UseHammer -= HandleHammerUsage;
+    }
+
+    private void HandleHammerUsage(int squareIndex)
+    {
+        _GridSquares[squareIndex].GetComponent<GridSquare>().ClearSquareWithHammer();
     }
 
     void Start()
@@ -274,7 +279,7 @@ public class NewBehaviourScript : MonoBehaviour
 
         if (linesCompleted > 0)
         {
-            Debug.Log($"[Grid] Belirlenen Patlama Rengi: {GameEvents.LastExplosionColor}");
+            GameEvents.AddScoresMethod(10);
             GameEvents.TriggerOneByOneBlockExplosionMethod(GameEvents.LastExplosionColor);
         }
 
