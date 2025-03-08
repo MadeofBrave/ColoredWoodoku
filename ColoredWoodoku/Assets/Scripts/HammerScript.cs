@@ -10,8 +10,8 @@ public class HammerSquare : Shape, IBeginDragHandler, IDragHandler, IEndDragHand
     public Shapedata hammerShapeData;
     private static int hammerCost = 10;
     private GridSquare currentHoveredSquare;
-    private float lowPointsAlpha = 0.3f; // Düşük puanda saydamlık değeri
-    private float normalAlpha = 1f; // Normal saydamlık değeri
+    private float lowPointsAlpha = 0.3f; 
+    private float normalAlpha = 1f;
     private bool isDragging = false;
 
     public override void Awake()
@@ -20,7 +20,7 @@ public class HammerSquare : Shape, IBeginDragHandler, IDragHandler, IEndDragHand
         _rectTransform = GetComponent<RectTransform>();
         _canvasGroup = GetComponent<CanvasGroup>();
         _startPosition = _rectTransform.localPosition;
-        UpdateHammerVisibility(); // Başlangıçta görünürlüğü ayarla
+        UpdateHammerVisibility();
     }
 
     private new void OnEnable()
@@ -87,7 +87,7 @@ public class HammerSquare : Shape, IBeginDragHandler, IDragHandler, IEndDragHand
     {
         if (!Scores.Instance.HasEnoughPoints(hammerCost))
         {
-            return; // Yeterli puan yoksa sürüklemeyi engelle
+            return;
         }
 
         isDragging = true;
@@ -139,13 +139,10 @@ public class HammerSquare : Shape, IBeginDragHandler, IDragHandler, IEndDragHand
                 square.Selected = false;
             }
             
-            // Çekici başlangıç pozisyonuna gönder ve yeniden aktif et
             MoveShapetoStartPosition();
-            Debug.Log("HammerSquare: Seçili kareler temizlendi, çekiç yeniden kullanıma hazır.");
         }
         else
         {
-            Debug.Log("HammerSquare: Seçili dolu kare bulunamadı.");
             MoveShapetoStartPosition();
         }
     }

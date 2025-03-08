@@ -1818,11 +1818,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1320621607170937591, guid: 59a5433bb9aba8c45a03ebd8e635c0cb, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 314
+      value: -366
       objectReference: {fileID: 0}
     - target: {fileID: 1320621607170937591, guid: 59a5433bb9aba8c45a03ebd8e635c0cb, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 1282
+      value: 1294
       objectReference: {fileID: 0}
     - target: {fileID: 1575712196277989150, guid: 59a5433bb9aba8c45a03ebd8e635c0cb, type: 3}
       propertyPath: shapeColor
