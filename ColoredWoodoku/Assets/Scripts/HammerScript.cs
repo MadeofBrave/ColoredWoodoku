@@ -98,14 +98,7 @@ public class HammerSquare : Shape, IBeginDragHandler, IDragHandler, IEndDragHand
     public override void OnDrag(PointerEventData eventData)
     {
         if (!isDragging) return;
-
-        Vector2 pos;
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            transform.parent as RectTransform,
-            eventData.position,
-            eventData.pressEventCamera,
-            out pos);
-        _rectTransform.localPosition = pos;
+        base.OnDrag(eventData);
     }
 
     public override void OnEndDrag(PointerEventData eventData)
@@ -145,5 +138,11 @@ public class HammerSquare : Shape, IBeginDragHandler, IDragHandler, IEndDragHand
         {
             MoveShapetoStartPosition();
         }
+    }
+
+    public override void OnPointerDown(PointerEventData eventData)
+    {
+        // Hammer için renk değiştirme özelliğini devre dışı bırakıyoruz
+        // base.OnPointerDown(eventData) çağrılmıyor
     }
 }

@@ -29,23 +29,44 @@ public class ColorSelectionPanel : MonoBehaviour
     
     private void Start()
     {
-        blueButton.onClick.AddListener(() => TryChangeColor(Shape.ShapeColor.Blue));
-        greenButton.onClick.AddListener(() => TryChangeColor(Shape.ShapeColor.Green));
-        yellowButton.onClick.AddListener(() => TryChangeColor(Shape.ShapeColor.Yellow));
+        blueButton.onClick.AddListener(ChangeToBlue);
+        greenButton.onClick.AddListener(ChangeToGreen);
+        yellowButton.onClick.AddListener(ChangeToYellow);
     }
     
     private void ShowPanel(Shape shape)
     {
         currentShape = shape;
         UpdateCostText();
+        
+        if (panelObject == null)
+        {
+            return;
+        }
+
         panelObject.SetActive(true);
     }
     
     private void UpdateCostText()
     {
-        costText.text = "Mavi: " + Shape.colorCosts[Shape.ShapeColor.Blue] + "\n" +
-                       "Yeşil: " + Shape.colorCosts[Shape.ShapeColor.Green] + "\n" +
-                       "Sarı: " + Shape.colorCosts[Shape.ShapeColor.Yellow];
+        costText.text = "Blue: " + Shape.colorCosts[Shape.ShapeColor.Blue] + " " +
+                       "Green: " + Shape.colorCosts[Shape.ShapeColor.Green] + " " +
+                       "Yellow: " + Shape.colorCosts[Shape.ShapeColor.Yellow];
+    }
+    
+    public void ChangeToBlue()
+    {
+        TryChangeColor(Shape.ShapeColor.Blue);
+    }
+
+    public void ChangeToGreen()
+    {
+        TryChangeColor(Shape.ShapeColor.Green);
+    }
+
+    public void ChangeToYellow()
+    {
+        TryChangeColor(Shape.ShapeColor.Yellow);
     }
     
     private void TryChangeColor(Shape.ShapeColor newColor)
@@ -55,10 +76,6 @@ public class ColorSelectionPanel : MonoBehaviour
             if (currentShape.TryChangeColor(newColor))
             {
                 panelObject.SetActive(false);
-            }
-            else
-            {
-                // Yetersiz puan uyarısı gösterilebilir
             }
         }
     }

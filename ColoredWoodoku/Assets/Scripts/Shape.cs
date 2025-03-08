@@ -35,14 +35,14 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
 
     public bool _shapeactive = true;
     private float holdTime = 0f;
-    private float requiredHoldTime = 0.5f;
+    private float requiredHoldTime = 0.3f;
     private bool isHolding = false;
     
     public static Dictionary<ShapeColor, int> colorCosts = new Dictionary<ShapeColor, int>()
     {
-        { ShapeColor.Blue, 100 },
-        { ShapeColor.Green, 100 },
-        { ShapeColor.Yellow, 100 }
+        { ShapeColor.Blue, 5 },
+        { ShapeColor.Green, 5 },
+        { ShapeColor.Yellow, 5 }
     };
 
     public virtual void Awake()
@@ -88,7 +88,7 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
             case ShapeColor.Yellow:
                 return yellowSprite;
             default:
-                Debug.LogWarning("GetSprite() çağrıldı ama uygun renk bulunamadı: " + color);
+                Debug.LogWarning("GetSprite() called but no matching color found: " + color);
                 return null;
         }
     }
@@ -332,15 +332,23 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
 
     public virtual void OnPointerClick(PointerEventData eventData) { }
 
-    public virtual void OnPointerUp(PointerEventData eventData) { }
+    public virtual void OnPointerUp(PointerEventData eventData) 
+    {
+        isHolding = false;
+        holdTime = 0f;
+    }
 
-    public virtual void OnBeginDrag(PointerEventData eventData) { }
+    public virtual void OnBeginDrag(PointerEventData eventData) 
+    {
+        isHolding = false;
+        holdTime = 0f;
+    }
 
     public virtual void OnDrag(PointerEventData eventData)
     {
         if (_transform == null || _canvas == null)
         {
-            Debug.LogError("OnDrag sırasında _transform veya _canvas null!");
+            Debug.LogError("_transform or _canvas is null during OnDrag!");
             return;
         }
 
@@ -386,9 +394,8 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
         return canPlaceShape;
     }
 
-    public void OnPointerDown(PointerEventData eventData)
+    public virtual void OnPointerDown(PointerEventData eventData)
     {
-        if (!IsonStartPosition()) return;
         isHolding = true;
         holdTime = 0f;
         StartCoroutine(CheckHoldTime());
@@ -410,6 +417,10 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
 
     private void ShowColorSelectionPanel()
     {
+        if (this is ColorSquare)
+        {
+            return;
+        }
         GameEvents.ShowColorSelectionPanelMethod(this);
     }
 
