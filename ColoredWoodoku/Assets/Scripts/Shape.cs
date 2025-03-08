@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -33,6 +34,17 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
     public Vector3 _startPosition;
 
     public bool _shapeactive = true;
+    private float holdTime = 0f;
+    private float requiredHoldTime = 0.5f;
+    private bool isHolding = false;
+    
+    public static Dictionary<ShapeColor, int> colorCosts = new Dictionary<ShapeColor, int>()
+    {
+        { ShapeColor.Blue, 100 },
+        { ShapeColor.Green, 100 },
+        { ShapeColor.Yellow, 100 }
+    };
+
     public virtual void Awake()
     {
         _shapeStartScale = this.GetComponent<RectTransform>().localScale;
@@ -374,7 +386,44 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
         return canPlaceShape;
     }
 
-    public void OnPointerDown(PointerEventData eventData) { }
+    public void OnPointerDown(PointerEventData eventData)
+    {
+        if (!IsonStartPosition()) return;
+        isHolding = true;
+        holdTime = 0f;
+        StartCoroutine(CheckHoldTime());
+    }
+
+    private IEnumerator CheckHoldTime()
+    {
+        while (isHolding)
+        {
+            holdTime += Time.deltaTime;
+            if (holdTime >= requiredHoldTime)
+            {
+                ShowColorSelectionPanel();
+                isHolding = false;
+            }
+            yield return null;
+        }
+    }
+
+    private void ShowColorSelectionPanel()
+    {
+        GameEvents.ShowColorSelectionPanelMethod(this);
+    }
+
+    public bool TryChangeColor(ShapeColor newColor)
+    {
+        if (Scores.Instance.HasEnoughPoints(colorCosts[newColor]))
+        {
+            Scores.Instance.SpendPoints(colorCosts[newColor]);
+            shapeColor = newColor;
+            SetColor(newColor);
+            return true;
+        }
+        return false;
+    }
 
     public virtual void MoveShapetoStartPosition()
     {

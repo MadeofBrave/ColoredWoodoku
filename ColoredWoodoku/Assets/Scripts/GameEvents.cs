@@ -13,6 +13,7 @@ public static class GameEvents
     public static event Action<Shape.ShapeColor> TriggerOneByOneBlockExplosion;
     public static Shape.ShapeColor LastExplosionColor { get; private set; } = Shape.ShapeColor.None;
     public static event Action<int> UseHammer = delegate { };
+    public static event Action<Shape> ShowColorSelectionPanel;
 
     public static void UseHammerMethod(int squareIndex)
     {
@@ -20,10 +21,9 @@ public static class GameEvents
     }
 
     public static void SetLastExplosionColorMethod(Shape.ShapeColor color)
-{
+    {
         LastExplosionColor = color;
-}
-
+    }
 
     public static void CheckIfOneByOneCanBePlacedMethod()
     {
@@ -38,7 +38,6 @@ public static class GameEvents
         }
         ShapeStorage.Instance.EnableColorSquare();
     }
-
 
     public static void AddScoresMethod(int score)
     {
@@ -68,5 +67,10 @@ public static class GameEvents
     public static void SetShapeInactiveMethod()
     {
         SetShapeInactive();
+    }
+
+    public static void ShowColorSelectionPanelMethod(Shape shape)
+    {
+        ShowColorSelectionPanel?.Invoke(shape);
     }
 }

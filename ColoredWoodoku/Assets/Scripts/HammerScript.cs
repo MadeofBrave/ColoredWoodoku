@@ -8,6 +8,11 @@ public class HammerSquare : Shape, IBeginDragHandler, IDragHandler, IEndDragHand
     private RectTransform _rectTransform;
     private CanvasGroup _canvasGroup;
     public Shapedata hammerShapeData;
+    private static int hammerCost = 10;
+    private GridSquare currentHoveredSquare;
+    private float lowPointsAlpha = 0.3f; // Düşük puanda saydamlık değeri
+    private float normalAlpha = 1f; // Normal saydamlık değeri
+    private bool isDragging = false;
 
     public override void Awake()
     {
@@ -15,20 +20,85 @@ public class HammerSquare : Shape, IBeginDragHandler, IDragHandler, IEndDragHand
         _rectTransform = GetComponent<RectTransform>();
         _canvasGroup = GetComponent<CanvasGroup>();
         _startPosition = _rectTransform.localPosition;
+        UpdateHammerVisibility(); // Başlangıçta görünürlüğü ayarla
     }
+
     private new void OnEnable()
     {
         RequestNewShape(hammerShapeData);
+        UpdateHammerVisibility();
+    }
+
+    private void Update()
+    {
+        if (!isDragging)
+        {
+            UpdateHammerVisibility();
+        }
+    }
+
+    private void UpdateHammerVisibility()
+    {
+        if (Scores.Instance != null)
+        {
+            bool hasEnoughPoints = Scores.Instance.HasEnoughPoints(hammerCost);
+            _canvasGroup.alpha = hasEnoughPoints ? normalAlpha : lowPointsAlpha;
+        }
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.CompareTag("GridSquare"))
+        {
+            currentHoveredSquare = collision.GetComponent<GridSquare>();
+            if (currentHoveredSquare.isOccupied)
+            {
+                currentHoveredSquare.Selected = true;
+            }
+        }
+    }
+
+    private void OnTriggerStay2D(Collider2D collision)
+    {
+        if (collision.CompareTag("GridSquare"))
+        {
+            currentHoveredSquare = collision.GetComponent<GridSquare>();
+            if (currentHoveredSquare.isOccupied)
+            {
+                currentHoveredSquare.Selected = true;
+            }
+        }
+    }
+
+    private void OnTriggerExit2D(Collider2D collision)
+    {
+        if (collision.CompareTag("GridSquare"))
+        {
+            var square = collision.GetComponent<GridSquare>();
+            if (square == currentHoveredSquare)
+            {
+                currentHoveredSquare.Selected = false;
+                currentHoveredSquare = null;
+            }
+        }
     }
 
     public override void OnBeginDrag(PointerEventData eventData)
     {
+        if (!Scores.Instance.HasEnoughPoints(hammerCost))
+        {
+            return; // Yeterli puan yoksa sürüklemeyi engelle
+        }
+
+        isDragging = true;
         _canvasGroup.alpha = 0.6f;
         _canvasGroup.blocksRaycasts = false;
     }
 
     public override void OnDrag(PointerEventData eventData)
     {
+        if (!isDragging) return;
+
         Vector2 pos;
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
             transform.parent as RectTransform,
@@ -37,24 +107,46 @@ public class HammerSquare : Shape, IBeginDragHandler, IDragHandler, IEndDragHand
             out pos);
         _rectTransform.localPosition = pos;
     }
-    public void OnEndDrag(PointerEventData eventData)
+
+    public override void OnEndDrag(PointerEventData eventData)
     {
-        _canvasGroup.alpha = 1f;
+        isDragging = false;
         _canvasGroup.blocksRaycasts = true;
+        UpdateHammerVisibility();
 
-        GridSquare targetSquare = FindObjectsOfType<GridSquare>().FirstOrDefault(gs => gs.isOccupied);
-
-        if (targetSquare != null)
+        if (!Scores.Instance.HasEnoughPoints(hammerCost))
         {
-            GameEvents.UseHammerMethod(targetSquare.SquareIndex);
-            gameObject.SetActive(false);
-            Debug.Log("HammerSquare: �lk bulunan dolu kare temizlendi.");
+            Debug.Log("HammerSquare: Yeterli puan yok, en az " + hammerCost + " puan gerekli.");
+            MoveShapetoStartPosition();
+            return;
+        }
+
+        var squareList = new List<GridSquare>();
+        foreach (var square in FindObjectsOfType<GridSquare>())
+        {
+            if (square.Selected && square.isOccupied)
+            {
+                squareList.Add(square);
+            }
+        }
+
+        if (squareList.Count > 0)
+        {
+            foreach (var square in squareList)
+            {
+                Scores.Instance.SpendPoints(hammerCost);
+                square.ClearSquareWithHammer();
+                square.Selected = false;
+            }
+            
+            // Çekici başlangıç pozisyonuna gönder ve yeniden aktif et
+            MoveShapetoStartPosition();
+            Debug.Log("HammerSquare: Seçili kareler temizlendi, çekiç yeniden kullanıma hazır.");
         }
         else
         {
-            Debug.Log("HammerSquare: Ge�erli bir kare bulunamad�, ba�lang�� pozisyonuna d�n�yor.");
+            Debug.Log("HammerSquare: Seçili dolu kare bulunamadı.");
             MoveShapetoStartPosition();
         }
     }
-
 }
