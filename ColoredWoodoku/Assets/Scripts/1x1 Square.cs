@@ -1,11 +1,16 @@
 using System.Collections.Generic;
 using UnityEngine.EventSystems;
+using UnityEngine;
+
 public class ColorSquare : Shape
 {
     public ShapeStorage shapeStorage;
+    private float holdTime = 0f;
+    private float requiredHoldTime = 1f;
+    private bool isHolding = false;
+
     private void OnEnable()
     {
-
         RequestNewShape(ShapeStorage.Instance.shapeData[6]);
         shapeColor = GameEvents.LastExplosionColor;
         GameEvents.TriggerOneByOneBlockExplosion += HandleBlockExplosion;
@@ -24,6 +29,47 @@ public class ColorSquare : Shape
             return;
         }
         gameObject.SetActive(true);
+    }
+
+    public override void OnPointerDown(PointerEventData eventData)
+    {
+        isHolding = true;
+        holdTime = 0f;
+        StartCoroutine(CheckHoldTime());
+    }
+
+    public override void OnPointerUp(PointerEventData eventData)
+    {
+        isHolding = false;
+        holdTime = 0f;
+        StopAllCoroutines();
+    }
+
+    private System.Collections.IEnumerator CheckHoldTime()
+    {
+        while (isHolding)
+        {
+            holdTime += Time.deltaTime;
+            if (holdTime >= requiredHoldTime)
+            {
+                ShowColorSelectionPanel();
+                isHolding = false;
+                break;
+            }
+            yield return null;
+        }
+    }
+
+    private void ShowColorSelectionPanel()
+    {
+        GameEvents.ShowColorSelectionPanelMethod(this);
+    }
+
+    public override void OnBeginDrag(PointerEventData eventData)
+    {
+        base.OnBeginDrag(eventData);
+        isHolding = false;
+        StopAllCoroutines();
     }
 
     public override void OnEndDrag(PointerEventData eventData)
@@ -63,6 +109,4 @@ public class ColorSquare : Shape
             MoveShapetoStartPosition();
         }
     }
-
-
 }
