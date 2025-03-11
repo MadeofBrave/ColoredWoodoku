@@ -20,9 +20,9 @@ public static class GameEvents
     }
 
     public static void SetLastExplosionColorMethod(Shape.ShapeColor color)
-{
+    {
         LastExplosionColor = color;
-}
+    }
 
 
     public static void CheckIfOneByOneCanBePlacedMethod()

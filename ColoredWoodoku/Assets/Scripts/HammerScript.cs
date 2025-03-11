@@ -48,11 +48,11 @@ public class HammerSquare : Shape, IBeginDragHandler, IDragHandler, IEndDragHand
         {
             GameEvents.UseHammerMethod(targetSquare.SquareIndex);
             gameObject.SetActive(false);
-            Debug.Log("HammerSquare: İlk bulunan dolu kare temizlendi.");
+            Debug.Log("HammerSquare: Ãlk bulunan dolu kare temizlendi.");
         }
         else
         {
-            Debug.Log("HammerSquare: Geçerli bir kare bulunamadı, başlangıç pozisyonuna dönüyor.");
+            Debug.Log("HammerSquare: GeÃ§erli bir kare bulunamadÃ½, baÃ¾langÃ½Ã§ pozisyonuna dÃ¶nÃ¼yor.");
             MoveShapetoStartPosition();
         }
     }

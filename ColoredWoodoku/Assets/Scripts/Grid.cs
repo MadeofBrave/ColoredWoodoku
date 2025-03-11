@@ -160,7 +160,7 @@ public class NewBehaviourScript : MonoBehaviour
 
         if (currentSelectedShape is ColorSquare)
         {
-            currentSelectedShape.gameObject.SetActive(false); 
+            currentSelectedShape.gameObject.SetActive(false);
         }
 
         bool anyShapeLeft = shapeStorage.ShapeList.Any(shape => shape.IsonStartPosition() && shape.IsAnyOfShapeSquareActive());
@@ -252,7 +252,7 @@ public class NewBehaviourScript : MonoBehaviour
             {
                 uniqueLines.Add(lineKey);
 
-                if (CheckLineColors(line)) 
+                if (CheckLineColors(line))
                 {
                     Shape.ShapeColor explosionColor = Shape.ShapeColor.None;
 

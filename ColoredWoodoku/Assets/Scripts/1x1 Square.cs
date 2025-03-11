@@ -7,7 +7,7 @@ public class ColorSquare : Shape
     {
 
         RequestNewShape(ShapeStorage.Instance.shapeData[6]);
-        shapeColor = GameEvents.LastExplosionColor; 
+        shapeColor = GameEvents.LastExplosionColor;
         GameEvents.TriggerOneByOneBlockExplosion += HandleBlockExplosion;
     }
 
