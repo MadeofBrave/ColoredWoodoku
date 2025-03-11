@@ -269,7 +269,6 @@ public class NewBehaviourScript : MonoBehaviour
                     if (explosionColor != Shape.ShapeColor.None)
                     {
                         GameEvents.SetLastExplosionColorMethod(explosionColor);
-                        Debug.Log($"[Grid] Patlama Rengi Belirlendi: {explosionColor}");
                     }
 
                     ClearLine(line);

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -33,6 +34,17 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
     public Vector3 _startPosition;
 
     public bool _shapeactive = true;
+    private float holdTime = 0f;
+    private float requiredHoldTime = 0.3f;
+    private bool isHolding = false;
+    
+    public static Dictionary<ShapeColor, int> colorCosts = new Dictionary<ShapeColor, int>()
+    {
+        { ShapeColor.Blue, 5 },
+        { ShapeColor.Green, 5 },
+        { ShapeColor.Yellow, 5 }
+    };
+
     public virtual void Awake()
     {
         _shapeStartScale = this.GetComponent<RectTransform>().localScale;
@@ -76,7 +88,7 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
             case ShapeColor.Yellow:
                 return yellowSprite;
             default:
-                Debug.LogWarning("GetSprite() çağrıldı ama uygun renk bulunamadı: " + color);
+                Debug.LogWarning("GetSprite() called but no matching color found: " + color);
                 return null;
         }
     }
@@ -320,15 +332,23 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
 
     public virtual void OnPointerClick(PointerEventData eventData) { }
 
-    public virtual void OnPointerUp(PointerEventData eventData) { }
+    public virtual void OnPointerUp(PointerEventData eventData) 
+    {
+        isHolding = false;
+        holdTime = 0f;
+    }
 
-    public virtual void OnBeginDrag(PointerEventData eventData) { }
+    public virtual void OnBeginDrag(PointerEventData eventData) 
+    {
+        isHolding = false;
+        holdTime = 0f;
+    }
 
     public virtual void OnDrag(PointerEventData eventData)
     {
         if (_transform == null || _canvas == null)
         {
-            Debug.LogError("OnDrag sırasında _transform veya _canvas null!");
+            Debug.LogError("_transform or _canvas is null during OnDrag!");
             return;
         }
 
@@ -374,7 +394,47 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
         return canPlaceShape;
     }
 
-    public void OnPointerDown(PointerEventData eventData) { }
+    public virtual void OnPointerDown(PointerEventData eventData)
+    {
+        isHolding = true;
+        holdTime = 0f;
+        StartCoroutine(CheckHoldTime());
+    }
+
+    private IEnumerator CheckHoldTime()
+    {
+        while (isHolding)
+        {
+            holdTime += Time.deltaTime;
+            if (holdTime >= requiredHoldTime)
+            {
+                ShowColorSelectionPanel();
+                isHolding = false;
+            }
+            yield return null;
+        }
+    }
+
+    private void ShowColorSelectionPanel()
+    {
+        if (this is ColorSquare)
+        {
+            return;
+        }
+        GameEvents.ShowColorSelectionPanelMethod(this);
+    }
+
+    public bool TryChangeColor(ShapeColor newColor)
+    {
+        if (Scores.Instance.HasEnoughPoints(colorCosts[newColor]))
+        {
+            Scores.Instance.SpendPoints(colorCosts[newColor]);
+            shapeColor = newColor;
+            SetColor(newColor);
+            return true;
+        }
+        return false;
+    }
 
     public virtual void MoveShapetoStartPosition()
     {

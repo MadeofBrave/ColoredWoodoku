@@ -16,8 +16,15 @@ public class Scores : MonoBehaviour
 
     public Text scoreText;
 
+    public static Scores Instance { get; private set; }
+
     private void Awake()
     {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        
         if (BinaryDataSystem.Exist(bestScoreKey_))
         {
             StartCoroutine(ReadDataFile());
@@ -41,7 +48,6 @@ public class Scores : MonoBehaviour
     {
         GameEvents.AddScores += AddScores;
         GameEvents.GameOver += SaveBestScore;
-
     }
 
     private void OnDisable()
@@ -64,5 +70,19 @@ public class Scores : MonoBehaviour
     private void SaveBestScore(bool newBestScore)
     {
         BinaryDataSystem.Save<BestScoreData>(bestScores_, bestScoreKey_);
+    }
+
+    public bool HasEnoughPoints(int cost)
+    {
+        return currentScores_ >= cost;
+    }
+
+    public void SpendPoints(int points)
+    {
+        if (HasEnoughPoints(points))
+        {
+            currentScores_ -= points;
+            UpdateScoreText();
+        }
     }
 }
