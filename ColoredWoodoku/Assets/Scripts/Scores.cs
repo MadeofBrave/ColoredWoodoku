@@ -40,7 +40,7 @@ public class Scores : MonoBehaviour
 
     void Start()
     {
-        currentScores_ = 0;
+        currentScores_ = 1000;
         UpdateScoreText();
     }
 

@@ -36,11 +36,12 @@ public class ShapeStorage : MonoBehaviour
         if (colorSquare != null)
         {
             colorSquare.CreateShape(shapeData[6]);
+            colorSquare.gameObject.SetActive(false);
         }
 
         foreach (var shape in ShapeList)
         {
-            if (shape is HammerSquare)
+            if (shape is HammerSquare || shape is LineHammerSquare)
             {
                 shape.CreateShape(shapeData[6]);
                 continue;
@@ -98,7 +99,7 @@ public class ShapeStorage : MonoBehaviour
 
         foreach (var shape in ShapeList)
         {
-            if (shape is HammerSquare)
+            if (shape is HammerSquare || shape is LineHammerSquare)
             {
                 shape.RequestNewShape(shapeData[6]); 
             }
@@ -119,11 +120,13 @@ public class ShapeStorage : MonoBehaviour
             return;
         }
 
-        colorSquare.shapeColor = GameEvents.LastExplosionColor;
-        colorSquare.SetColor(GameEvents.LastExplosionColor);
         if (!colorSquare.gameObject.activeSelf)
         {
             colorSquare.gameObject.SetActive(true);
+            colorSquare.RequestNewShape(shapeData[6]);  // Eğer aktif değilse şekli yeniden oluştur
         }
+        
+        colorSquare.shapeColor = GameEvents.LastExplosionColor;
+        colorSquare.SetColor(GameEvents.LastExplosionColor);
     }
 }

@@ -5,14 +5,15 @@ using UnityEngine.EventSystems;
 
 public class HammerSquare : Shape, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
-    private RectTransform _rectTransform;
-    private CanvasGroup _canvasGroup;
+    protected RectTransform _rectTransform;
+    protected CanvasGroup _canvasGroup;
+    protected static int hammerCost = 10;
+    protected float lowPointsAlpha = 0.3f;
+    protected float normalAlpha = 1f;
+    protected bool isDragging = false;
+    protected GridSquare currentHoveredSquare;
     public Shapedata hammerShapeData;
-    private static int hammerCost = 10;
-    private GridSquare currentHoveredSquare;
-    private float lowPointsAlpha = 0.3f; 
-    private float normalAlpha = 1f;
-    private bool isDragging = false;
+    private Vector3 _startPosition;
 
     public override void Awake()
     {
@@ -46,7 +47,7 @@ public class HammerSquare : Shape, IBeginDragHandler, IDragHandler, IEndDragHand
         }
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    protected virtual void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.CompareTag("GridSquare"))
         {
@@ -58,7 +59,7 @@ public class HammerSquare : Shape, IBeginDragHandler, IDragHandler, IEndDragHand
         }
     }
 
-    private void OnTriggerStay2D(Collider2D collision)
+    protected virtual void OnTriggerStay2D(Collider2D collision)
     {
         if (collision.CompareTag("GridSquare"))
         {
@@ -70,7 +71,7 @@ public class HammerSquare : Shape, IBeginDragHandler, IDragHandler, IEndDragHand
         }
     }
 
-    private void OnTriggerExit2D(Collider2D collision)
+    protected virtual void OnTriggerExit2D(Collider2D collision)
     {
         if (collision.CompareTag("GridSquare"))
         {
@@ -98,7 +99,15 @@ public class HammerSquare : Shape, IBeginDragHandler, IDragHandler, IEndDragHand
     public override void OnDrag(PointerEventData eventData)
     {
         if (!isDragging) return;
-        base.OnDrag(eventData);
+
+        Vector2 localPoint;
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            transform.parent.GetComponent<RectTransform>(),
+            eventData.position,
+            eventData.pressEventCamera,
+            out localPoint
+        );
+        _rectTransform.localPosition = localPoint;
     }
 
     public override void OnEndDrag(PointerEventData eventData)
@@ -140,9 +149,4 @@ public class HammerSquare : Shape, IBeginDragHandler, IDragHandler, IEndDragHand
         }
     }
 
-    public override void OnPointerDown(PointerEventData eventData)
-    {
-        // Hammer için renk değiştirme özelliğini devre dışı bırakıyoruz
-        // base.OnPointerDown(eventData) çağrılmıyor
-    }
 }

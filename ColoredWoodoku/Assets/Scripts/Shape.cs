@@ -100,7 +100,7 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
         GameEvents.SetShapeInactive -= SetShapeInactive;
     }
 
-    public void OnEnable()
+    protected virtual void OnEnable()
     {
         SetColor(shapeColor);
         GameEvents.MoveShapetoStartPosition += MoveShapetoStartPosition;

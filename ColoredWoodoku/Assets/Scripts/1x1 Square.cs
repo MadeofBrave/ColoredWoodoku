@@ -5,13 +5,12 @@ using UnityEngine;
 public class ColorSquare : Shape
 {
     public ShapeStorage shapeStorage;
-    private float holdTime = 0f;
-    private float requiredHoldTime = 1f;
-    private bool isHolding = false;
+    private new float holdTime = 0f;
+    private new float requiredHoldTime = 1f;
+    private new bool isHolding = false;
 
-    private void OnEnable()
+    private new void OnEnable()
     {
-        RequestNewShape(ShapeStorage.Instance.shapeData[6]);
         shapeColor = GameEvents.LastExplosionColor;
         GameEvents.TriggerOneByOneBlockExplosion += HandleBlockExplosion;
     }
@@ -33,29 +32,18 @@ public class ColorSquare : Shape
 
     public override void OnPointerDown(PointerEventData eventData)
     {
-        isHolding = true;
-        holdTime = 0f;
         StartCoroutine(CheckHoldTime());
     }
 
     public override void OnPointerUp(PointerEventData eventData)
     {
-        isHolding = false;
-        holdTime = 0f;
         StopAllCoroutines();
     }
 
     private System.Collections.IEnumerator CheckHoldTime()
     {
-        while (isHolding)
+        while (true)
         {
-            holdTime += Time.deltaTime;
-            if (holdTime >= requiredHoldTime)
-            {
-                ShowColorSelectionPanel();
-                isHolding = false;
-                break;
-            }
             yield return null;
         }
     }
@@ -68,7 +56,6 @@ public class ColorSquare : Shape
     public override void OnBeginDrag(PointerEventData eventData)
     {
         base.OnBeginDrag(eventData);
-        isHolding = false;
         StopAllCoroutines();
     }
 

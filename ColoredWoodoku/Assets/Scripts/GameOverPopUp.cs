@@ -5,9 +5,9 @@ using UnityEngine;
 public class GameOverPopUp : MonoBehaviour
 {
     public GameObject gameOverPopUp;
-    public GameObject loosePopUp;    
-    public GameObject newBestScorePopUp;    
-    
+    public GameObject loosePopUp;
+    public GameObject newBestScorePopUp;
+
     void Start()
     {
         gameOverPopUp.SetActive(false);
