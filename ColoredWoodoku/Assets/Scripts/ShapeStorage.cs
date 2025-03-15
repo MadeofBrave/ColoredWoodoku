@@ -41,7 +41,7 @@ public class ShapeStorage : MonoBehaviour
 
         foreach (var shape in ShapeList)
         {
-            if (shape is HammerSquare || shape is LineHammerSquare)
+            if (shape is HammerSquare || shape is LineEraser)
             {
                 shape.CreateShape(shapeData[6]);
                 continue;
@@ -99,7 +99,7 @@ public class ShapeStorage : MonoBehaviour
 
         foreach (var shape in ShapeList)
         {
-            if (shape is HammerSquare || shape is LineHammerSquare)
+            if (shape is HammerSquare || shape is LineEraser)
             {
                 shape.RequestNewShape(shapeData[6]); 
             }

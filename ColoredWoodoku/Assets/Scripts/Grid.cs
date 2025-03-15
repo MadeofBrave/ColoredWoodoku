@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEngine;
 using static Shape;
 
-public class NewBehaviourScript : MonoBehaviour
+public class Grid : MonoBehaviour
 {
     public ShapeStorage shapeStorage;
     public int columns = 9;
@@ -15,7 +15,7 @@ public class NewBehaviourScript : MonoBehaviour
     public float squareScale = 0.5f;
     public float everySquareOffset = 0f;
     private Vector2 _offset = new Vector2(0.0f, 0.0f);
-    private List<GameObject> _GridSquares = new List<GameObject>();
+    public List<GameObject> _GridSquares = new List<GameObject>();
     private LineIndicator _LineIndicator;
     public int[,] line_data = new int[9, 9];
     public bool SquareOccupied { get; private set; } = false;
@@ -436,6 +436,12 @@ public class NewBehaviourScript : MonoBehaviour
         return squareList;
     }
 
-
-
+    public GameObject GetGridSquare(int index)
+    {
+        if (index >= 0 && index < _GridSquares.Count)
+        {
+            return _GridSquares[index];
+        }
+        return null;
+    }
 }

@@ -179,6 +179,7 @@ MonoBehaviour:
   startPosition: {x: -435, y: 442}
   squareScale: 0.9
   everySquareOffset: 0.1
+  _GridSquares: []
 --- !u!114 &120847060
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -483,8 +484,8 @@ GameObject:
   - component: {fileID: 322332737}
   - component: {fileID: 322332736}
   - component: {fileID: 322332739}
-  - component: {fileID: 322332738}
   - component: {fileID: 322332740}
+  - component: {fileID: 322332741}
   m_Layer: 5
   m_Name: HorizontalHammer
   m_TagString: Untagged
@@ -501,14 +502,14 @@ RectTransform:
   m_GameObject: {fileID: 322332734}
   m_LocalRotation: {x: -0, y: -0, z: -0.7071068, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.81615, y: 0.81615, z: 0.81615}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 239698759}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: -90}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -77, y: 694}
+  m_AnchoredPosition: {x: -88.843, y: 694.44}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &322332736
@@ -549,30 +550,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 322332734}
   m_CullTransparentMesh: 1
---- !u!114 &322332738
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 322332734}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bf2d0d7775d115b49abff255f4a41aa4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  squareShapeImage: {fileID: 0}
-  shapeSelectedScale: {x: 0, y: 0}
-  offset: {x: 0, y: 700}
-  CurrentShapeData: {fileID: 0}
-  shapeColor: 0
-  blueSprite: {fileID: 0}
-  greenSprite: {fileID: 0}
-  yellowSprite: {fileID: 0}
-  _startPosition: {x: 0, y: 0, z: 0}
-  _shapeactive: 1
-  hammerShapeData: {fileID: 0}
-  isHorizontal: 1
 --- !u!61 &322332739
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -630,6 +607,18 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &322332741
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 322332734}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a370a895c7dd7224a911a1b85578f001, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &434682602
 GameObject:
   m_ObjectHideFlags: 0
@@ -1504,11 +1493,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1320621607170937591, guid: 59a5433bb9aba8c45a03ebd8e635c0cb, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: -203.69731
+      value: -366
       objectReference: {fileID: 0}
     - target: {fileID: 1320621607170937591, guid: 59a5433bb9aba8c45a03ebd8e635c0cb, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 776.36456
+      value: 692
       objectReference: {fileID: 0}
     - target: {fileID: 1575712196277989150, guid: 59a5433bb9aba8c45a03ebd8e635c0cb, type: 3}
       propertyPath: shapeColor
@@ -1630,8 +1619,8 @@ GameObject:
   - component: {fileID: 1169373970}
   - component: {fileID: 1169373969}
   - component: {fileID: 1169373972}
-  - component: {fileID: 1169373971}
   - component: {fileID: 1169373973}
+  - component: {fileID: 1169373974}
   m_Layer: 5
   m_Name: VerticalHammer
   m_TagString: Untagged
@@ -1648,14 +1637,14 @@ RectTransform:
   m_GameObject: {fileID: 1169373967}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.81615, y: 0.81615, z: 0.81615}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 239698759}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -201.99998, y: 694}
+  m_AnchoredPosition: {x: -190.86, y: 694.44}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1169373969
@@ -1696,30 +1685,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1169373967}
   m_CullTransparentMesh: 1
---- !u!114 &1169373971
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1169373967}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bf2d0d7775d115b49abff255f4a41aa4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  squareShapeImage: {fileID: 0}
-  shapeSelectedScale: {x: 0, y: 0}
-  offset: {x: 0, y: 700}
-  CurrentShapeData: {fileID: 0}
-  shapeColor: 0
-  blueSprite: {fileID: 0}
-  greenSprite: {fileID: 0}
-  yellowSprite: {fileID: 0}
-  _startPosition: {x: 0, y: 0, z: 0}
-  _shapeactive: 1
-  hammerShapeData: {fileID: 0}
-  isHorizontal: 0
 --- !u!61 &1169373972
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -1777,6 +1742,18 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &1169373974
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1169373967}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a370a895c7dd7224a911a1b85578f001, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1199437315
 GameObject:
   m_ObjectHideFlags: 0

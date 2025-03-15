@@ -14,6 +14,7 @@ public static class GameEvents
     public static Shape.ShapeColor LastExplosionColor { get; private set; } = Shape.ShapeColor.None;
     public static event Action<int> UseHammer = delegate { };
     public static event Action<Shape> ShowColorSelectionPanel;
+    public static event Action<int> UseLineEraser = delegate { };
 
     public static void UseHammerMethod(int squareIndex)
     {
@@ -72,5 +73,10 @@ public static class GameEvents
     public static void ShowColorSelectionPanelMethod(Shape shape)
     {
         ShowColorSelectionPanel?.Invoke(shape);
+    }
+
+    public static void UseLineEraserMethod(int squareIndex)
+    {
+        UseLineEraser?.Invoke(squareIndex);
     }
 }
