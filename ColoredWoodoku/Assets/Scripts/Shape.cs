@@ -45,6 +45,11 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
         { ShapeColor.Yellow, 5 }
     };
 
+    public string CurrentColor { get; set; } = "blue"; // varsayılan renk
+    private bool isLongPressing = false;
+    private float longPressTime = 1f; // 1 saniye basılı tutma süresi
+    private ColorChangePanel colorChangePanel;
+
     public virtual void Awake()
     {
         _shapeStartScale = this.GetComponent<RectTransform>().localScale;
@@ -52,6 +57,7 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
         _canvas = GetComponentInParent<Canvas>();
         _startPosition = transform.localPosition;
         _shapeactive = true;
+        colorChangePanel = FindObjectOfType<ColorChangePanel>();
 
         System.Random random = new System.Random();
         SetColor(shapeColor);
@@ -332,15 +338,17 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
 
     public virtual void OnPointerClick(PointerEventData eventData) { }
 
-    public virtual void OnPointerUp(PointerEventData eventData) 
+    public virtual void OnPointerUp(PointerEventData eventData)
     {
         isHolding = false;
+        isLongPressing = false;
         holdTime = 0f;
     }
 
-    public virtual void OnBeginDrag(PointerEventData eventData) 
+    public virtual void OnBeginDrag(PointerEventData eventData)
     {
         isHolding = false;
+        isLongPressing = false;
         holdTime = 0f;
     }
 
@@ -399,6 +407,12 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
         isHolding = true;
         holdTime = 0f;
         StartCoroutine(CheckHoldTime());
+
+        if (!(this is LineEraser) && !(this is HammerSquare))
+        {
+            isLongPressing = true;
+            StartCoroutine(LongPressCoroutine(eventData));
+        }
     }
 
     private IEnumerator CheckHoldTime()
@@ -453,4 +467,34 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
         return selectedColor;
     }
 
+    private IEnumerator LongPressCoroutine(PointerEventData eventData)
+    {
+        float pressTime = 0f;
+
+        while (isLongPressing)
+        {
+            pressTime += Time.deltaTime;
+
+            if (pressTime >= longPressTime)
+            {
+                if (colorChangePanel != null)
+                {
+                    Vector2 screenPosition = eventData.position;
+                    colorChangePanel.ShowPanel(this, screenPosition);
+                }
+                break;
+            }
+
+            yield return null;
+        }
+    }
+
+    public void ChangeSprite(Sprite newSprite)
+    {
+        var image = GetComponent<UnityEngine.UI.Image>();
+        if (image != null)
+        {
+            image.sprite = newSprite;
+        }
+    }
 }
