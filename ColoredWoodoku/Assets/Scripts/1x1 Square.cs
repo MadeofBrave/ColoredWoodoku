@@ -37,16 +37,37 @@ public class ColorSquare : Shape
 
     public override void OnPointerUp(PointerEventData eventData)
     {
+        isHolding = false;
         StopAllCoroutines();
     }
 
     private System.Collections.IEnumerator CheckHoldTime()
     {
-        while (true)
+        isHolding = true;
+        holdTime = 0f;
+        Vector2 holdStartPosition = Input.mousePosition;
+
+        while (isHolding)
         {
+            holdTime += Time.deltaTime;
+
+            if (Vector2.Distance(holdStartPosition, Input.mousePosition) > 30f)
+            {
+                isHolding = false;
+                yield break;
+            }
+
+            if (holdTime >= requiredHoldTime)
+            {
+                ShowColorSelectionPanel(); // Renk panelini göster
+                isHolding = false;
+                yield break;
+            }
+
             yield return null;
         }
     }
+
 
     private void ShowColorSelectionPanel()
     {

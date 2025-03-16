@@ -19,12 +19,10 @@ public class ColorSelectionPanel : MonoBehaviour
         canvasGroup = GetComponent<CanvasGroup>();
         HidePanel();
 
-        // Butonlara tıklama olaylarını ekle
         blueButton.onClick.AddListener(() => ChangeColor(Shape.ShapeColor.Blue));
         greenButton.onClick.AddListener(() => ChangeColor(Shape.ShapeColor.Green));
         yellowButton.onClick.AddListener(() => ChangeColor(Shape.ShapeColor.Yellow));
 
-        // Maliyet textlerini ayarla
         blueCostText.text = COLOR_COST.ToString();
         greenCostText.text = COLOR_COST.ToString();
         yellowCostText.text = COLOR_COST.ToString();
