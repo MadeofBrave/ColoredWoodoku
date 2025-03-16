@@ -1,12 +1,15 @@
 using UnityEngine;
 using UnityEngine.UI;
-using System;
+using UnityEngine.EventSystems;
+using System.Collections;
 
 public class ColorChangePanel : MonoBehaviour
 {
     private const int COLOR_CHANGE_COST = 30;
     private Shape currentShape;
     private CanvasGroup canvasGroup;
+    private bool isWaitingForLongPress = false;
+    private float longPressTime = 1f;
 
     [SerializeField] private Button blueButton;
     [SerializeField] private Button greenButton;
@@ -28,8 +31,25 @@ public class ColorChangePanel : MonoBehaviour
         }
     }
 
+    private void OnEnable()
+    {
+        GameEvents.ShowColorSelectionPanel += OnShowColorChangePanel;
+    }
+
+    private void OnDisable()
+    {
+        GameEvents.ShowColorSelectionPanel -= OnShowColorChangePanel;
+    }
+
+    private void OnShowColorChangePanel(Shape shape)
+    {
+        ShowPanel(shape, Input.mousePosition);
+    }
+
     public void ShowPanel(Shape shape, Vector2 position)
     {
+        if (shape == null || shape is LineEraser || shape is HammerSquare) return;
+
         currentShape = shape;
         transform.position = position;
         canvasGroup.alpha = 1f;
@@ -60,5 +80,61 @@ public class ColorChangePanel : MonoBehaviour
         {
             HidePanel();
         }
+    }
+
+    private void Update()
+    {
+        // Mouse sol tuşuna basılı tutulduğunda
+        if (Input.GetMouseButton(0))
+        {
+            if (!isWaitingForLongPress)
+            {
+                isWaitingForLongPress = true;
+                StartCoroutine(CheckLongPress());
+            }
+        }
+        else
+        {
+            isWaitingForLongPress = false;
+        }
+    }
+
+    private IEnumerator CheckLongPress()
+    {
+        float pressTime = 0f;
+        Vector2 startPosition = Input.mousePosition;
+
+        while (Input.GetMouseButton(0))
+        {
+            pressTime += Time.deltaTime;
+
+            // Eğer mouse çok hareket ettiyse (sürükleme başladıysa) iptal et
+            if (Vector2.Distance(startPosition, Input.mousePosition) > 30f)
+            {
+                yield break;
+            }
+
+            // Yeterli süre basıldıysa
+            if (pressTime >= longPressTime)
+            {
+                // Mouse'un altındaki Shape'i bul
+                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                RaycastHit2D hit = Physics2D.Raycast(ray.origin, ray.direction);
+
+                if (hit.collider != null)
+                {
+                    Shape shape = hit.collider.GetComponent<Shape>();
+                    if (shape != null && !(shape is LineEraser) && !(shape is HammerSquare))
+                    {
+                        GameEvents.ShowColorSelectionPanelMethod(shape);
+                    }
+                }
+                break;
+            }
+
+            yield return null;
+        }
+
+        isWaitingForLongPress = false;
     }
 } 

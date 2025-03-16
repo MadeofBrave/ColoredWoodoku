@@ -35,8 +35,9 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
 
     public bool _shapeactive = true;
     private float holdTime = 0f;
-    private float requiredHoldTime = 0.3f;
+    private float requiredHoldTime = 1f;
     private bool isHolding = false;
+    private Vector2 holdStartPosition;
     
     public static Dictionary<ShapeColor, int> colorCosts = new Dictionary<ShapeColor, int>()
     {
@@ -45,10 +46,7 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
         { ShapeColor.Yellow, 5 }
     };
 
-    public string CurrentColor { get; set; } = "blue"; // varsayılan renk
-    private bool isLongPressing = false;
-    private float longPressTime = 1f; // 1 saniye basılı tutma süresi
-    private ColorChangePanel colorChangePanel;
+    public string CurrentColor { get; set; } = "blue";
 
     public virtual void Awake()
     {
@@ -57,7 +55,6 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
         _canvas = GetComponentInParent<Canvas>();
         _startPosition = transform.localPosition;
         _shapeactive = true;
-        colorChangePanel = FindObjectOfType<ColorChangePanel>();
 
         System.Random random = new System.Random();
         SetColor(shapeColor);
@@ -338,17 +335,12 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
 
     public virtual void OnPointerClick(PointerEventData eventData) { }
 
-    public virtual void OnPointerUp(PointerEventData eventData)
-    {
-        isHolding = false;
-        isLongPressing = false;
-        holdTime = 0f;
-    }
+
 
     public virtual void OnBeginDrag(PointerEventData eventData)
     {
+        StopAllCoroutines();
         isHolding = false;
-        isLongPressing = false;
         holdTime = 0f;
     }
 
@@ -404,15 +396,20 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
 
     public virtual void OnPointerDown(PointerEventData eventData)
     {
-        isHolding = true;
-        holdTime = 0f;
-        StartCoroutine(CheckHoldTime());
-
         if (!(this is LineEraser) && !(this is HammerSquare))
         {
-            isLongPressing = true;
-            StartCoroutine(LongPressCoroutine(eventData));
+            isHolding = true;
+            holdTime = 0f;
+            holdStartPosition = eventData.position;
+            StartCoroutine(CheckHoldTime());
         }
+    }
+
+    public virtual void OnPointerUp(PointerEventData eventData)
+    {
+        StopAllCoroutines();
+        isHolding = false;
+        holdTime = 0f;
     }
 
     private IEnumerator CheckHoldTime()
@@ -420,22 +417,25 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
         while (isHolding)
         {
             holdTime += Time.deltaTime;
+
+            if (Vector2.Distance(holdStartPosition, Input.mousePosition) > 30f)
+            {
+                isHolding = false;
+                yield break;
+            }
+
             if (holdTime >= requiredHoldTime)
             {
-                ShowColorSelectionPanel();
+                if (!(this is ColorSquare))
+                {
+                    GameEvents.ShowColorSelectionPanelMethod(this);
+                }
                 isHolding = false;
+                break;
             }
+
             yield return null;
         }
-    }
-
-    private void ShowColorSelectionPanel()
-    {
-        if (this is ColorSquare)
-        {
-            return;
-        }
-        GameEvents.ShowColorSelectionPanelMethod(this);
     }
 
     public bool TryChangeColor(ShapeColor newColor)
@@ -465,28 +465,6 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
 
         ShapeColor selectedColor = availableColors[UnityEngine.Random.Range(0, availableColors.Length)];
         return selectedColor;
-    }
-
-    private IEnumerator LongPressCoroutine(PointerEventData eventData)
-    {
-        float pressTime = 0f;
-
-        while (isLongPressing)
-        {
-            pressTime += Time.deltaTime;
-
-            if (pressTime >= longPressTime)
-            {
-                if (colorChangePanel != null)
-                {
-                    Vector2 screenPosition = eventData.position;
-                    colorChangePanel.ShowPanel(this, screenPosition);
-                }
-                break;
-            }
-
-            yield return null;
-        }
     }
 
     public void ChangeSprite(Sprite newSprite)

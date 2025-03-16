@@ -1,87 +1,76 @@
 using UnityEngine;
 using UnityEngine.UI;
-using System.Collections.Generic;
 
 public class ColorSelectionPanel : MonoBehaviour
 {
-    public GameObject panelObject;
-    public Button blueButton;
-    public Button greenButton;
-    public Button yellowButton;
-    public Text costText;
-    
+    [SerializeField] private Button blueButton;
+    [SerializeField] private Button greenButton;
+    [SerializeField] private Button yellowButton;
+    [SerializeField] private Text blueCostText;
+    [SerializeField] private Text greenCostText;
+    [SerializeField] private Text yellowCostText;
+
     private Shape currentShape;
-    
+    private CanvasGroup canvasGroup;
+    private const int COLOR_COST = 5;
+
     private void Awake()
     {
-        panelObject.SetActive(false);
+        canvasGroup = GetComponent<CanvasGroup>();
+        HidePanel();
+
+        // Butonlara tıklama olaylarını ekle
+        blueButton.onClick.AddListener(() => ChangeColor(Shape.ShapeColor.Blue));
+        greenButton.onClick.AddListener(() => ChangeColor(Shape.ShapeColor.Green));
+        yellowButton.onClick.AddListener(() => ChangeColor(Shape.ShapeColor.Yellow));
+
+        // Maliyet textlerini ayarla
+        blueCostText.text = COLOR_COST.ToString();
+        greenCostText.text = COLOR_COST.ToString();
+        yellowCostText.text = COLOR_COST.ToString();
     }
-    
+
     private void OnEnable()
     {
         GameEvents.ShowColorSelectionPanel += ShowPanel;
     }
-    
+
     private void OnDisable()
     {
         GameEvents.ShowColorSelectionPanel -= ShowPanel;
     }
-    
-    private void Start()
+
+    public void ShowPanel(Shape shape)
     {
-        blueButton.onClick.AddListener(ChangeToBlue);
-        greenButton.onClick.AddListener(ChangeToGreen);
-        yellowButton.onClick.AddListener(ChangeToYellow);
-    }
-    
-    private void ShowPanel(Shape shape)
-    {
+        if (shape == null) return;
+
         currentShape = shape;
-        UpdateCostText();
-        
-        if (panelObject == null)
+        transform.localPosition = new Vector3(0, 0, 0);
+        canvasGroup.alpha = 1f;
+        canvasGroup.blocksRaycasts = true;
+        UpdateButtonsInteractability();
+    }
+
+    public void HidePanel()
+    {
+        canvasGroup.alpha = 0f;
+        canvasGroup.blocksRaycasts = false;
+        currentShape = null;
+    }
+
+    private void UpdateButtonsInteractability()
+    {
+        bool hasEnoughPoints = Scores.Instance.HasEnoughPoints(COLOR_COST);
+        blueButton.interactable = hasEnoughPoints;
+        greenButton.interactable = hasEnoughPoints;
+        yellowButton.interactable = hasEnoughPoints;
+    }
+
+    private void ChangeColor(Shape.ShapeColor newColor)
+    {
+        if (currentShape != null && currentShape.TryChangeColor(newColor))
         {
-            return;
-        }
-
-        panelObject.SetActive(true);
-    }
-    
-    private void UpdateCostText()
-    {
-        costText.text = "Blue: " + Shape.colorCosts[Shape.ShapeColor.Blue] + " " +
-                       "Green: " + Shape.colorCosts[Shape.ShapeColor.Green] + " " +
-                       "Yellow: " + Shape.colorCosts[Shape.ShapeColor.Yellow];
-    }
-    
-    public void ChangeToBlue()
-    {
-        TryChangeColor(Shape.ShapeColor.Blue);
-    }
-
-    public void ChangeToGreen()
-    {
-        TryChangeColor(Shape.ShapeColor.Green);
-    }
-
-    public void ChangeToYellow()
-    {
-        TryChangeColor(Shape.ShapeColor.Yellow);
-    }
-    
-    private void TryChangeColor(Shape.ShapeColor newColor)
-    {
-        if (currentShape != null)
-        {
-            if (currentShape.TryChangeColor(newColor))
-            {
-                panelObject.SetActive(false);
-            }
+            HidePanel();
         }
     }
-    
-    public void ClosePanel()
-    {
-        panelObject.SetActive(false);
-    }
-} 
+}
