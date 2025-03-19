@@ -19,6 +19,7 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
         Blue,
         Green,
         Yellow,
+        Joker,
         None
     }
     public ShapeColor shapeColor;
@@ -109,6 +110,7 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
         GameEvents.MoveShapetoStartPosition += MoveShapetoStartPosition;
         GameEvents.SetShapeInactive += SetShapeInactive;
     }
+
 
     public bool IsonStartPosition()
     {

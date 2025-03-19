@@ -13,7 +13,7 @@ public class LineEraser : Shape
     protected CanvasGroup _canvasGroup;
 
     [SerializeField]
-    private bool isHorizontal = true; // Inspector'dan ayarlanabilir
+    private bool isHorizontal = true;
 
     public override void Awake()
     {
@@ -121,12 +121,10 @@ public class LineEraser : Shape
     {
         if (selectedSquares.Count == 0) return;
 
-        // İlk seçili karenin indeksini al
         int firstIndex = selectedSquares[0].SquareIndex;
         int row = firstIndex / 9;
         int column = firstIndex % 9;
 
-        // Yatay veya dikey silme işlemini gerçekleştir
         if (isHorizontal)
         {
             ClearRow(row);

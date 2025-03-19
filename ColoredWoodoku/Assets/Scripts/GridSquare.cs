@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,13 +10,54 @@ public class GridSquare : MonoBehaviour
     public Image activeImage;
     public List<Sprite> normalImages;
     public Sprite[] colorSprites;
-
+    private Coroutine colorChangeCoroutine;
+    private Shape.ShapeColor[] cycleColors = { Shape.ShapeColor.Blue, Shape.ShapeColor.Green, Shape.ShapeColor.Yellow };
+    private int currentColorIndex = 0;
     public Shape.ShapeColor squareColor;
     public bool isOccupied = false;
 
     public bool Selected { get; set; }
     public int SquareIndex { get; set; }
     public bool SquareOccupied { get; set; }
+
+
+    public void StartColorCycle()
+    {
+        if (colorChangeCoroutine != null)
+            StopCoroutine(colorChangeCoroutine);
+        colorChangeCoroutine = StartCoroutine(CycleColors());
+    }
+
+    private IEnumerator CycleColors()
+    {
+        while (true)
+        {
+            squareColor = cycleColors[currentColorIndex];
+            SetColor(squareColor);
+            currentColorIndex = (currentColorIndex + 1) % cycleColors.Length;
+            yield return new WaitForSeconds(0.3f);
+        }
+    }
+
+    public void PlaceShapeOnBoard(Shape.ShapeColor color, bool isJoker)
+    {
+        isOccupied = true;
+        squareColor = color;
+        SetColor(color);
+
+        if (isJoker) 
+        {
+            StartColorCycle();
+        }
+    }
+    public void StopColorCycle()
+    {
+        if (colorChangeCoroutine != null)
+        {
+            StopCoroutine(colorChangeCoroutine);
+            colorChangeCoroutine = null;
+        }
+    }
 
     void Start()
     {
@@ -56,7 +98,7 @@ public class GridSquare : MonoBehaviour
 
 
 
-    private void SetColor(Shape.ShapeColor color)
+    public void SetColor(Shape.ShapeColor color)
     {
         int index = (int)color;
         if (index >= 0 && index < colorSprites.Length)
@@ -97,6 +139,7 @@ public class GridSquare : MonoBehaviour
         {
             normalImage.sprite = normalImages[0];
         }
+        StopColorCycle();
     }
 
     public bool CanWeUseTheSquare()

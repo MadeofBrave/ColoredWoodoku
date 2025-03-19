@@ -16,7 +16,12 @@ public static class GameEvents
     public static event Action<Shape> ShowColorSelectionPanel = delegate { };
     public static event Action<int> UseLineEraser = delegate { };
     public static event Action<Shape> ShowColorChangePanel;
+    public static event Action<Shape> RotateShapeEvent = delegate { };
 
+    public static void RotateShapeMethod(Shape shape)
+    {
+        RotateShapeEvent?.Invoke(shape);
+    }
     public static void UseHammerMethod(int squareIndex)
     {
         UseHammer?.Invoke(squareIndex);

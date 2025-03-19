@@ -137,7 +137,6 @@ public class Grid : MonoBehaviour
             return;
         }
 
-
         if (currentSelectedShape.TotalSquareNumber != squareIndexes.Count)
         {
             GameEvents.MoveShapetoStartPositionMethod();
@@ -152,16 +151,14 @@ public class Grid : MonoBehaviour
             return;
         }
 
+        bool isJoker = currentSelectedShape is JokerSquare; // Joker mi kontrol et
 
         foreach (var squareIndex in squareIndexes)
         {
-            _GridSquares[squareIndex].GetComponent<GridSquare>().PlaceShapeOnBoard(currentSelectedShape.shapeColor);
+            _GridSquares[squareIndex].GetComponent<GridSquare>().PlaceShapeOnBoard(currentSelectedShape.shapeColor, isJoker);
         }
 
-        if (currentSelectedShape is ColorSquare)
-        {
-            currentSelectedShape.gameObject.SetActive(false);
-        }
+        currentSelectedShape.gameObject.SetActive(false);
 
         bool anyShapeLeft = shapeStorage.ShapeList.Any(shape => shape.IsonStartPosition() && shape.IsAnyOfShapeSquareActive());
 
@@ -176,6 +173,7 @@ public class Grid : MonoBehaviour
 
         CheckIfAnyLineIsCompleted();
     }
+
 
 
     private int[] GetVerticalLine(int colIndex)
@@ -206,7 +204,7 @@ public class Grid : MonoBehaviour
         return squareLine;
     }
 
-    private void CheckIfAnyLineIsCompleted()
+    public void CheckIfAnyLineIsCompleted()
     {
         List<int[]> lines = new List<int[]>();
 
@@ -299,7 +297,7 @@ public class Grid : MonoBehaviour
         {
             var square = _GridSquares[line[i]].GetComponent<GridSquare>();
 
-            if (!square.isOccupied || square.squareColor != firstColor)
+            if (!square.isOccupied || (square.squareColor != firstColor && square.squareColor != Shape.ShapeColor.Joker))
             {
                 return false;
             }
@@ -315,6 +313,7 @@ public class Grid : MonoBehaviour
         {
             var gridSquare = _GridSquares[index].GetComponent<GridSquare>();
             gridSquare.ClearOccupied();
+            gridSquare.StopColorCycle();
         }
     }
 

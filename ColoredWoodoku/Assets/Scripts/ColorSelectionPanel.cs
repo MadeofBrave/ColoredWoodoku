@@ -13,6 +13,9 @@ public class ColorSelectionPanel : MonoBehaviour
     private Shape currentShape;
     private CanvasGroup canvasGroup;
     private const int COLOR_COST = 5;
+    public Button rotateButton;
+    private Shape selectedShape;
+
 
     private void Awake()
     {
@@ -22,6 +25,7 @@ public class ColorSelectionPanel : MonoBehaviour
         blueButton.onClick.AddListener(() => ChangeColor(Shape.ShapeColor.Blue));
         greenButton.onClick.AddListener(() => ChangeColor(Shape.ShapeColor.Green));
         yellowButton.onClick.AddListener(() => ChangeColor(Shape.ShapeColor.Yellow));
+        rotateButton.onClick.AddListener(OnRotateButtonClick);
 
         blueCostText.text = COLOR_COST.ToString();
         greenCostText.text = COLOR_COST.ToString();
@@ -43,6 +47,7 @@ public class ColorSelectionPanel : MonoBehaviour
         if (shape == null) return;
 
         currentShape = shape;
+        SetSelectedShape(shape);
         transform.localPosition = new Vector3(0, 0, 0);
         canvasGroup.alpha = 1f;
         canvasGroup.blocksRaycasts = true;
@@ -69,6 +74,18 @@ public class ColorSelectionPanel : MonoBehaviour
         if (currentShape != null && currentShape.TryChangeColor(newColor))
         {
             HidePanel();
+        }
+    }
+    public void SetSelectedShape(Shape shape)
+    {
+        selectedShape = shape;
+    }
+
+    private void OnRotateButtonClick()
+    {
+        if (selectedShape != null)
+        {
+            selectedShape.transform.Rotate(0, 0, 90);
         }
     }
 }

@@ -5,9 +5,9 @@ using UnityEngine;
 public class ColorSquare : Shape
 {
     public ShapeStorage shapeStorage;
-    private new float holdTime = 0f;
-    private new float requiredHoldTime = 1f;
-    private new bool isHolding = false;
+    private  float holdTime = 0f;
+    private  float requiredHoldTime = 1f;
+    private  bool isHolding = false;
 
     private new void OnEnable()
     {
@@ -59,7 +59,7 @@ public class ColorSquare : Shape
 
             if (holdTime >= requiredHoldTime)
             {
-                ShowColorSelectionPanel(); // Renk panelini göster
+                ShowColorSelectionPanel();
                 isHolding = false;
                 yield break;
             }
