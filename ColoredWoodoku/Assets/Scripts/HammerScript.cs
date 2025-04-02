@@ -13,7 +13,6 @@ public class HammerSquare : Shape, IBeginDragHandler, IDragHandler, IEndDragHand
     protected bool isDragging = false;
     protected GridSquare currentHoveredSquare;
     public Shapedata hammerShapeData;
-    private Vector3 _startPosition;
 
     public override void Awake()
     {

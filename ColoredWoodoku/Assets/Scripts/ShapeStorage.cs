@@ -7,7 +7,7 @@ public class ShapeStorage : MonoBehaviour
     public List<Shapedata> shapeData;
     public List<Shape> ShapeList;
     public ColorSquare colorSquare;
-    public JokerSquare jokerSquare; // Add reference to JokerSquare
+    public JokerSquare jokerSquare;
     public static ShapeStorage Instance { get; private set; }
 
     private void Awake()
@@ -40,7 +40,7 @@ public class ShapeStorage : MonoBehaviour
             colorSquare.gameObject.SetActive(false);
         }
 
-        if (jokerSquare != null) // Initialize JokerSquare
+        if (jokerSquare != null) 
         {
             jokerSquare.CreateShape(shapeData[6]);
             jokerSquare.gameObject.SetActive(false);
@@ -98,7 +98,6 @@ public class ShapeStorage : MonoBehaviour
     {
         Debug.Log("Yeni şekil talep ediliyor...");
 
-        // JokerSquare düzgün sıfırlanıyor mu?
         if (jokerSquare != null)
         {
             jokerSquare.gameObject.SetActive(true);
@@ -106,7 +105,6 @@ public class ShapeStorage : MonoBehaviour
             jokerSquare.StartColorCycle(); 
         }
 
-        // ColorSquare düzgün sıfırlanıyor mu?
         if (colorSquare != null)
         {
             if (GameEvents.LastExplosionColor == Shape.ShapeColor.None)
@@ -169,7 +167,7 @@ public class ShapeStorage : MonoBehaviour
         colorSquare.SetColor(GameEvents.LastExplosionColor);
     }
 
-    public void EnableJokerSquare() // Add method to enable JokerSquare
+    public void EnableJokerSquare()
     {
         if (GameEvents.LastExplosionColor == Shape.ShapeColor.None || jokerSquare == null)
         {

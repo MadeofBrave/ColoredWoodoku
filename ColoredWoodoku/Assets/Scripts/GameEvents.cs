@@ -17,7 +17,12 @@ public static class GameEvents
     public static event Action<int> UseLineEraser = delegate { };
     public static event Action<Shape> ShowColorChangePanel;
     public static event Action<Shape> RotateShapeEvent = delegate { };
+    public static event Action RequestNewShapes = delegate { };
 
+    public static void OnRequestNewShapes()
+    {
+        RequestNewShapes.Invoke();
+    }
     public static void RotateShapeMethod(Shape shape)
     {
         RotateShapeEvent?.Invoke(shape);
