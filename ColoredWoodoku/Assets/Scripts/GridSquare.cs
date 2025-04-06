@@ -93,6 +93,7 @@ public class GridSquare : MonoBehaviour
 
             SquareOccupied = false;
             Selected = false;
+            StopColorCycle();
         }
     }
 

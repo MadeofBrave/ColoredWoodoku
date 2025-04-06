@@ -11,6 +11,7 @@ public class LineEraser : Shape
     private bool isDragging = false;
     protected RectTransform _rectTransform;
     protected CanvasGroup _canvasGroup;
+    public Shapedata lineEraserShapeData;
 
     [SerializeField]
     private bool isHorizontal = true;
@@ -28,7 +29,25 @@ public class LineEraser : Shape
             costText.text = COST.ToString();
         }
 
+        if (lineEraserShapeData != null)
+        {
+            CreateShape(lineEraserShapeData);
+        }
+
         UpdateVisibility();
+    }
+
+    public override void RequestNewShape(Shapedata shapeData)
+    {
+        if (lineEraserShapeData != null)
+        {
+            CreateShape(lineEraserShapeData);
+        }
+        else
+        {
+            base.RequestNewShape(shapeData);
+        }
+        transform.localPosition = _startPosition;
     }
 
     private void Update()

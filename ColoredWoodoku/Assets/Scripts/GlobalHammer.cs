@@ -6,12 +6,31 @@ public class ClearBoardHammer : Shape
     public int clearBoardCost = 20;
     protected RectTransform _rectTransform;
     protected CanvasGroup _canvasGroup;
+    public Shapedata globalHammerShapeData;
 
     public override void Awake()
     {
         base.Awake();
         _rectTransform = GetComponent<RectTransform>();
         _canvasGroup = GetComponent<CanvasGroup>();
+
+        if (globalHammerShapeData != null)
+        {
+            CreateShape(globalHammerShapeData);
+        }
+    }
+
+    public override void RequestNewShape(Shapedata shapeData)
+    {
+        if (globalHammerShapeData != null)
+        {
+            CreateShape(globalHammerShapeData);
+        }
+        else
+        {
+            base.RequestNewShape(shapeData);
+        }
+        transform.localPosition = _startPosition;
     }
 
     private void Update()

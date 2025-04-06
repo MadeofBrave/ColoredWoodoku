@@ -6,6 +6,7 @@ public class JokerSquare : Shape
 {
     public ShapeStorage shapeStorage;
     public int shapeCost = 25;
+    public Shapedata jokerShapeData;
 
     private ShapeColor[] colorsToCycle = { ShapeColor.Blue, ShapeColor.Green, ShapeColor.Yellow }; 
     private int currentColorIndex = 0;
@@ -14,13 +15,66 @@ public class JokerSquare : Shape
     public override void Awake()
     {
         base.Awake();
-        EnsureShape7();
+        
+        // Image bileşenlerinin Raycast Target özelliğini aç
+        var mainImage = GetComponent<UnityEngine.UI.Image>();
+        if (mainImage != null)
+        {
+            mainImage.raycastTarget = true;
+        }
+
+        var childImages = GetComponentsInChildren<UnityEngine.UI.Image>();
+        foreach (var image in childImages)
+        {
+            image.raycastTarget = true;
+        }
+        
+        if (jokerShapeData != null)
+        {
+            CreateShape(jokerShapeData);
+        }
+        else
+        {
+            EnsureShape7();
+        }
+        
         gameObject.SetActive(true);
+    }
+
+    public override void RequestNewShape(Shapedata shapeData)
+    {
+        if (jokerShapeData != null)
+        {
+            CreateShape(jokerShapeData);
+        }
+        else if (shapeStorage != null)
+        {
+            CreateShape(shapeStorage.shapeData[6]);
+        }
+        else
+        {
+            base.RequestNewShape(shapeData);
+        }
+        transform.localPosition = _startPosition;
     }
 
     protected override void OnEnable()
     {
         base.OnEnable();
+
+        // Image bileşenlerinin Raycast Target özelliğini aç
+        var mainImage = GetComponent<UnityEngine.UI.Image>();
+        if (mainImage != null)
+        {
+            mainImage.raycastTarget = true;
+        }
+
+        var childImages = GetComponentsInChildren<UnityEngine.UI.Image>();
+        foreach (var image in childImages)
+        {
+            image.raycastTarget = true;
+        }
+
         StartColorCycle();
         gameObject.SetActive(true);
     }
@@ -72,10 +126,16 @@ public class JokerSquare : Shape
         }
     }
 
-
     private void ResetAndEnable()
     {
-        EnsureShape7();
+        if (jokerShapeData != null)
+        {
+            CreateShape(jokerShapeData);
+        }
+        else
+        {
+            EnsureShape7();
+        }
         MoveShapetoStartPosition();
         StartColorCycle();
         gameObject.SetActive(true);
@@ -86,6 +146,56 @@ public class JokerSquare : Shape
         if (shapeStorage != null)
         {
             CreateShape(shapeStorage.shapeData[6]);
+        }
+    }
+
+    public override void DeactivateShape()
+    {
+        if (isInDropArea)
+        {
+            return;
+        }
+
+        if (_shapeactive)
+        {
+            foreach (var square in _currentShape)
+            {
+                if (square != null)
+                {
+                    square.SetActive(false);
+                }
+            }
+            _shapeactive = false;
+            
+            // Şekli yeniden oluştur
+            if (jokerShapeData != null)
+            {
+                CreateShape(jokerShapeData);
+            }
+            else
+            {
+                EnsureShape7();
+            }
+            MoveShapetoStartPosition();
+            StartColorCycle();
+            gameObject.SetActive(true);
+            _shapeactive = true;
+        }
+    }
+
+    public override void ActivateShape()
+    {
+        if (!_shapeactive)
+        {
+            foreach (var square in _currentShape)
+            {
+                if (square != null)
+                {
+                    square.SetActive(true);
+                }
+            }
+            _shapeactive = true;
+            StartColorCycle();
         }
     }
 }

@@ -98,14 +98,19 @@ public class ShapeStorage : MonoBehaviour
     {
         Debug.Log("Yeni şekil talep ediliyor...");
 
-        if (jokerSquare != null)
+        // Drop area'daki şekilleri kontrol et
+        var dropArea = FindObjectOfType<DropArea>();
+        var shapesInDropArea = dropArea != null ? dropArea.GetStoredShapes() : new List<Shape>();
+
+        // Joker ve Color Square'i kontrol et
+        if (jokerSquare != null && !shapesInDropArea.Contains(jokerSquare))
         {
             jokerSquare.gameObject.SetActive(true);
             jokerSquare.MoveShapetoStartPosition();
             jokerSquare.StartColorCycle(); 
         }
 
-        if (colorSquare != null)
+        if (colorSquare != null && !shapesInDropArea.Contains(colorSquare))
         {
             if (GameEvents.LastExplosionColor == Shape.ShapeColor.None)
             {
@@ -121,8 +126,17 @@ public class ShapeStorage : MonoBehaviour
             }
         }
 
+        // Drop area dışındaki şekilleri yenile
+        int renewedShapes = 0;
         foreach (var shape in ShapeList)
         {
+            // Eğer şekil drop area'da ise atla
+            if (shapesInDropArea.Contains(shape))
+            {
+                Debug.Log($"[ShapeStorage] {shape.gameObject.name} drop area'da olduğu için yenilenmedi");
+                continue;
+            }
+
             if (shape is HammerSquare || shape is LineEraser)
             {
                 shape.RequestNewShape(shapeData[6]);
@@ -136,16 +150,17 @@ public class ShapeStorage : MonoBehaviour
                 shape.SetColor(shape.shapeColor);
                 shape.gameObject.SetActive(true); 
             }
+            renewedShapes++;
         }
 
-        bool anyActiveShape = ShapeList.Any(shape => shape.gameObject.activeSelf);
-        if (!anyActiveShape)
+        // En az bir şekil yenilendiyse başarılı
+        if (renewedShapes > 0)
         {
-            Debug.LogWarning("Tüm şekiller kapalı, yeni şekil çağırma başarısız!");
+            Debug.Log($"{renewedShapes} şekil yenilendi, yeni şekiller başarıyla yüklendi!");
         }
         else
         {
-            Debug.Log("Yeni şekiller başarıyla yüklendi!");
+            Debug.LogWarning("Hiç şekil yenilenemedi, tüm şekiller drop area'da olabilir!");
         }
     }
 

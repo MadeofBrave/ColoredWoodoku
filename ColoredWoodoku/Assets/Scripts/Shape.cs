@@ -36,7 +36,7 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
     public Sprite greenSprite;
     public Sprite yellowSprite;
 
-    private List<GameObject> _currentShape = new List<GameObject>();
+    protected List<GameObject> _currentShape = new List<GameObject>();
     private Vector3 _shapeStartScale;
     private RectTransform _transform;
     private Canvas _canvas;
@@ -165,7 +165,7 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
     }
 
 
-    public void DeactivateShape()
+    public virtual void DeactivateShape()
     {
         if (isInDropArea)
         {
@@ -197,7 +197,7 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
             }
         }
     }
-    public void ActivateShape()
+    public virtual void ActivateShape()
     {
         if (!_shapeactive)
         {
