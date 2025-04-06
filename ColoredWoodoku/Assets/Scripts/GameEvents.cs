@@ -19,6 +19,11 @@ public static class GameEvents
     public static event Action<Shape> RotateShapeEvent = delegate { };
     public static event Action RequestNewShapes = delegate { };
 
+    // Drop Area Events
+    public static event Action<Shape> ShapeEnteredDropArea = delegate { };
+    public static event Action<Shape> ShapeLeftDropArea = delegate { };
+    public static event Action<Shape> ShapeStoredInDropArea = delegate { };
+
     public static void OnRequestNewShapes()
     {
         RequestNewShapes.Invoke();
@@ -97,5 +102,21 @@ public static class GameEvents
         {
             ShowColorChangePanel(shape);
         }
+    }
+
+    // Drop Area Methods
+    public static void OnShapeEnteredDropArea(Shape shape)
+    {
+        ShapeEnteredDropArea?.Invoke(shape);
+    }
+
+    public static void OnShapeLeftDropArea(Shape shape)
+    {
+        ShapeLeftDropArea?.Invoke(shape);
+    }
+
+    public static void OnShapeStoredInDropArea(Shape shape)
+    {
+        ShapeStoredInDropArea?.Invoke(shape);
     }
 }

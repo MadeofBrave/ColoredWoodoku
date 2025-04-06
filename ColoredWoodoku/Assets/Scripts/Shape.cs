@@ -128,6 +128,7 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
     {
         GameEvents.MoveShapetoStartPosition -= MoveShapetoStartPosition;
         GameEvents.SetShapeInactive -= SetShapeInactive;
+        GameEvents.ShapeStoredInDropArea -= OnOtherShapeStoredInDropArea;
     }
 
     protected virtual void OnEnable()
@@ -135,6 +136,7 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
         SetColor(shapeColor);
         GameEvents.MoveShapetoStartPosition += MoveShapetoStartPosition;
         GameEvents.SetShapeInactive += SetShapeInactive;
+        GameEvents.ShapeStoredInDropArea += OnOtherShapeStoredInDropArea;
     }
 
 
@@ -405,35 +407,103 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
     }
 
 
+    public virtual void OnEndDrag(PointerEventData eventData)
+    {
+        Debug.Log("[Shape] OnEndDrag başladı - Shape: " + gameObject.name);
+        isDragging = false;
+
+        // Drop area kontrolü
+        var dropArea = FindObjectOfType<DropArea>();
+        bool isOverDropArea = dropArea != null && IsOverDropArea(dropArea);
+
+        if (isOverDropArea)
+        {
+            // DropArea'ya yerleştirmeyi dene
+            bool isStored = dropArea.StoreShape(this);
+            
+            if (isStored)
+            {
+                // Başarılıysa pozisyonu ayarla
+                isInDropArea = true;
+                currentDropArea = dropArea;
+                Debug.Log("[Shape] Şekil drop area'ya yerleştirildi");
+            }
+            else
+            {
+                // Başarısızsa eski pozisyona dön ve yeni şekil iste
+                Debug.Log("[Shape] Drop area dolu, şekil başlangıca dönüyor");
+                if (currentDropArea != null)
+                {
+                    currentDropArea.RetrieveShape(this);
+                    currentDropArea = null;
+                }
+                isInDropArea = false;
+                MoveShapetoStartPosition();
+                GameEvents.OnRequestNewShapes(); // Yeni şekil talebi
+            }
+        }
+        else
+        {
+            // Grid'e yerleştirmeyi dene
+            Debug.Log("[Shape] Grid'e yerleştirme deneniyor");
+            bool placedOnGrid = CheckIfOneByOneBlockCanBePlaced();
+            
+            if (!placedOnGrid)
+            {
+                Debug.Log("[Shape] Grid'e yerleştirilemedi, başlangıç pozisyonuna dönüyor");
+                // Drop area referanslarını temizle ve başlangıç pozisyonuna dön
+                if (currentDropArea != null)
+                {
+                    currentDropArea.RetrieveShape(this);
+                    currentDropArea = null;
+                }
+                isInDropArea = false;
+                MoveShapetoStartPosition();
+                GameEvents.OnRequestNewShapes(); // Yeni şekil talebi
+            }
+            else
+            {
+                Debug.Log("[Shape] Şekil grid'e yerleştirildi");
+                // Grid'e yerleştirildiğinde şeklin görünürlüğünü kapat
+                foreach (var square in _currentShape)
+                {
+                    if (square != null)
+                    {
+                        square.SetActive(false);
+                    }
+                }
+                // Drop area referanslarını temizle
+                if (currentDropArea != null)
+                {
+                    currentDropArea.RetrieveShape(this);
+                    currentDropArea = null;
+                }
+                isInDropArea = false;
+            }
+        }
+    }
+
     public virtual bool CheckIfOneByOneBlockCanBePlaced()
     {
         Debug.Log($"[Shape] CheckIfOneByOneBlockCanBePlaced başladı - Shape: {gameObject.name}");
         
-        bool canPlaceShape = false;
+        // Grid'e yerleştirme kontrolü için event'i tetikle
         GameEvents.CheckIfShapeCanBePlacedMethod();
-        canPlaceShape = true;
+        
+        // Eğer şekil hala aktifse, yerleştirilememiş demektir
+        bool canPlaceShape = !_shapeactive;
 
         if (canPlaceShape)
         {
             // Grid'e yerleştirme başarılı oldu
-            _shapeactive = false;
-            
-            // Drop area'dan gelmediyse referansları temizle
-            if (!isInDropArea)
+            Debug.Log("[Shape] Grid'e yerleştirildi, tüm drop area referansları temizleniyor");
+            if (currentDropArea != null)
             {
-                Debug.Log("[Shape] Drop area'dan gelmediği için referanslar temizleniyor");
-                if (currentDropArea != null)
-                {
-                    currentDropArea.ClearDropArea();
-                    currentDropArea = null;
-                }
-                isInDropArea = false;
-                isBeingRetrieved = false;
+                currentDropArea.RetrieveShape(this);
+                currentDropArea = null;
             }
-            else
-            {
-                Debug.Log("[Shape] Drop area'dan geldiği için referanslar korunuyor");
-            }
+            isInDropArea = false;
+            isBeingRetrieved = false;
         }
         else
         {
@@ -443,186 +513,64 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
         return canPlaceShape;
     }
 
-    private void CleanupDropAreaReferences()
+    private bool IsOverDropArea(DropArea dropArea)
     {
-        Debug.Log($"[Shape] Drop area referansları temizleniyor - Shape: {gameObject.name}");
+        if (dropArea == null) return false;
+
+        var dropAreaRect = dropArea.GetComponent<RectTransform>();
+        var shapeRect = GetComponent<RectTransform>();
+
+        // Pozisyonları ekran koordinatlarına çevir
+        Vector3[] dropCorners = new Vector3[4];
+        Vector3[] shapeCorners = new Vector3[4];
+        dropAreaRect.GetWorldCorners(dropCorners);
+        shapeRect.GetWorldCorners(shapeCorners);
+
+        // Drop area'nın sınırlarını kontrol et
+        Rect dropRect = new Rect(dropCorners[0].x, dropCorners[0].y,
+                                dropCorners[2].x - dropCorners[0].x,
+                                dropCorners[2].y - dropCorners[0].y);
+
+        // Şeklin merkez noktasını al
+        Vector3 shapeCenter = shapeCorners[0] + (shapeCorners[2] - shapeCorners[0]) * 0.5f;
+
+        return dropRect.Contains(shapeCenter);
+    }
+
+    public void MoveShapetoStartPosition()
+    {
+        Debug.Log("[Shape] MoveShapetoStartPosition çağrıldı - isInDropArea: " + isInDropArea);
         
-        if (currentDropArea != null)
+        if (!isInDropArea)
         {
-            currentDropArea.ClearDropArea();
-            currentDropArea = null;
-        }
-        
-        isInDropArea = false;
-        isBeingRetrieved = false;
-        _shapeactive = false;
-    }
-
-    public virtual void OnPointerDown(PointerEventData eventData)
-    {
-        if (!(this is LineEraser) && !(this is HammerSquare))
-        {
-            isHolding = true;
-            holdTime = 0f;
-            holdStartPosition = eventData.position;
-            StartCoroutine(CheckHoldTime());
-        }
-        startPosition = transform.position;
-    }
-
-    public virtual void OnPointerUp(PointerEventData eventData)
-    {
-        StopAllCoroutines();
-        isHolding = false;
-        holdTime = 0f;
-    }
-
-    private bool AnyOtherActiveShapeOnBoard()
-    {
-        Shape[] allShapes = FindObjectsOfType<Shape>();
-        foreach (var s in allShapes)
-        {
-            // DropArea'da olmayan, kendisi olmayan ve aktif bir shape varsa true döner
-            if (!s.isInDropArea && s._shapeactive && s != this)
-            {
-                Debug.Log($"[Shape] Aktif şekil bulundu: {s.name}");
-                return true;
-            }
-        }
-        Debug.Log("[Shape] Sahnede başka aktif şekil bulunamadı");
-        return false;
-    }
-
-    public virtual void OnEndDrag(PointerEventData eventData)
-    {
-        Debug.Log($"[Shape] OnEndDrag başladı - Shape: {gameObject.name}");
-        
-        // Drop area kontrolü
-        DropArea dropArea = FindDropAreaForStorage();
-        if (dropArea != null)
-        {
-            Debug.Log($"[Shape] Drop Area bulundu: {dropArea.gameObject.name}");
+            transform.localPosition = _startPosition;
+            _shapeactive = true;
             
-            // Drop area'ya yerleştirmeyi dene
-            bool placed = dropArea.StoreShape(this);
-            if (placed)
+            // Eğer bir drop area referansı varsa temizle
+            if (currentDropArea != null)
             {
-                StoreInDropArea(dropArea);
-                Debug.Log("[Shape] Şekil başarıyla drop area'ya yerleştirildi");
-                return;
+                currentDropArea = null;
             }
-            else
-            {
-                // Drop area doluysa şekil başlangıç pozisyonuna dönmeli
-                Debug.Log("[Shape] Drop area dolu olduğu için yerleştirilemedi");
-                MoveShapetoStartPosition();
-                
-                // Hiç başka şekil var mı?
-                if (!AnyOtherActiveShapeOnBoard())
-                {
-                    Debug.Log("[Shape] Sahnede başka şekil kalmadı, yeni şekiller isteniyor");
-                    GameEvents.RequestNewShapeMethod();
-                }
-                return;
-            }
-        }
-
-        // Grid kontrolü (sadece drop area'ya yerleştirilmediyse kontrol et)
-        bool shapePlaced = CheckIfOneByOneBlockCanBePlaced();
-        if (shapePlaced)
-        {
-            if (this is ColorSquare)
-            {
-                GameEvents.TriggerOneByOneBlockExplosionMethod(shapeColor);
-            }
-            return;
-        }
-
-        // Hiçbir yere yerleştirilemezse başlangıç pozisyonuna dön
-        Debug.Log("[Shape] Yerleştirilemedi, başlangıç pozisyonuna dönülüyor");
-        MoveShapetoStartPosition();
-    }
-
-    private DropArea FindDropAreaForStorage()
-    {
-        DropArea[] allDropAreas = GameObject.FindObjectsOfType<DropArea>();
-        Vector3[] corners = new Vector3[4];
-        Vector3 shapePos = transform.position;
-
-        foreach (var dropArea in allDropAreas)
-        {
-            if (!dropArea.CanStoreShape()) continue;
-
-            RectTransform dropAreaRect = dropArea.GetComponent<RectTransform>();
-            if (dropAreaRect != null)
-            {
-                dropAreaRect.GetWorldCorners(corners);
-                Rect bounds = new Rect(
-                    corners[0].x,
-                    corners[0].y,
-                    corners[2].x - corners[0].x,
-                    corners[2].y - corners[0].y
-                );
-
-                if (bounds.Contains(shapePos))
-                {
-                    return dropArea;
-                }
-            }
-        }
-
-        return null;
-    }
-
-    public void StoreInDropArea(DropArea dropArea)
-    {
-        if (dropArea == null) return;
-
-        Debug.Log($"[Shape] StoreInDropArea çağrıldı - Shape: {gameObject.name}");
-        
-        // Drop area'ya yerleştirme işlemi
-        isInDropArea = true;
-        currentDropArea = dropArea;
-        _shapeactive = true; // Drop area'da aktif olmalı
-        
-        // RectTransform kullanarak merkeze yerleştir
-        RectTransform dropAreaRect = dropArea.shapeHolder.GetComponent<RectTransform>();
-        if (dropAreaRect != null)
-        {
-            Vector3[] corners = new Vector3[4];
-            dropAreaRect.GetWorldCorners(corners);
-            Vector3 center = (corners[0] + corners[2]) / 2;
-            
-            transform.position = center;
-            transform.localScale = _shapeStartScale;
-            
-            Debug.Log($"[Shape] {gameObject.name} drop area'ya yerleştirildi - Pozisyon: {center}");
-        }
-
-        // Eğer sahnede başka aktif şekil yoksa yeni şekiller iste
-        if (!AnyOtherActiveShapeOnBoard())
-        {
-            Debug.Log("[Shape] Sahnede başka aktif şekil kalmadı, yeni şekiller isteniyor");
-            GameEvents.RequestNewShapeMethod();
         }
     }
 
     public void RetrieveFromDropArea()
     {
-        if (!isInDropArea || currentDropArea == null) return;
-
-        Debug.Log($"[Shape] RetrieveFromDropArea başladı - Shape: {gameObject.name}");
-        
+        Debug.Log("[Shape] RetrieveFromDropArea çağrıldı");
         isInDropArea = false;
         currentDropArea = null;
-        _shapeactive = true; // Drop area'dan çıkarıldığında aktif olmalı
-        
-        Debug.Log($"[Shape] {gameObject.name} drop area'dan çıkarıldı");
+        MoveShapetoStartPosition();
     }
 
-    public bool IsInDropArea()
+    private void OnOtherShapeStoredInDropArea(Shape storedShape)
     {
-        return isInDropArea;
+        if (storedShape != this && isInDropArea)
+        {
+            Debug.Log($"[Shape] Başka bir şekil drop area'ya yerleştirildi, bu şekil çıkartılıyor: {gameObject.name}");
+            isInDropArea = false;
+            currentDropArea = null;
+            MoveShapetoStartPosition();
+        }
     }
 
     private IEnumerator CheckHoldTime()
@@ -663,10 +611,6 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
         return false;
     }
 
-    public virtual void MoveShapetoStartPosition()
-    {
-        _transform.transform.localPosition = _startPosition;
-    }
     public ShapeColor GetRandomShapeColor()
     {
         ShapeColor[] availableColors = new ShapeColor[]
@@ -687,5 +631,23 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
         {
             image.sprite = newSprite;
         }
+    }
+
+    public virtual void OnPointerDown(PointerEventData eventData)
+    {
+        if (!isDragging)
+        {
+            isHolding = true;
+            holdStartPosition = eventData.position;
+            holdTime = 0f;
+            StartCoroutine(CheckHoldTime());
+        }
+    }
+
+    public virtual void OnPointerUp(PointerEventData eventData)
+    {
+        isHolding = false;
+        holdTime = 0f;
+        StopAllCoroutines();
     }
 }

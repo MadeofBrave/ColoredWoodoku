@@ -1,84 +1,108 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
 public class DropArea : MonoBehaviour
 {
-    public static DropArea Instance;
+    public static DropArea Instance { get; private set; }
     private BoxCollider2D areaCollider;
     private Shape currentShape;
     public GameObject shapeHolder;
-    public Vector2 colliderSize = new Vector2(100f, 100f); 
-    private Image dropAreaImage;
-    private RectTransform rectTransform;
+    public Vector2 colliderSize = new Vector2(100f, 100f);
     private bool isAvailable = true;
-    private bool isPlacingShape = false;
+    private readonly object _lock = new object();
 
     // Shape listesi ve data
     public List<Shape> storedShapes = new List<Shape>();
-    private const int maxStoredShapes = 1; // Sabit 1 şekil tutacak
+    private const int maxStoredShapes = 1;
     public Shapedata CurrentShapeData { get; private set; }
+
+    // Events
+    public delegate void ShapeStoredHandler(Shape shape);
+    public event ShapeStoredHandler OnShapeStored;
+    public event ShapeStoredHandler OnShapeRetrieved;
 
     private void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
+            return;
         }
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
 
-        areaCollider = GetComponent<BoxCollider2D>();
-        if (areaCollider == null)
+        InitializeComponents();
+    }
+
+    private void InitializeComponents()
+    {
+        try
         {
-            areaCollider = gameObject.AddComponent<BoxCollider2D>();
+            areaCollider = GetComponent<BoxCollider2D>();
+            if (areaCollider == null)
+            {
+                areaCollider = gameObject.AddComponent<BoxCollider2D>();
+            }
+
+            areaCollider.isTrigger = true;
+            areaCollider.size = colliderSize;
+
+            if (shapeHolder == null)
+            {
+                shapeHolder = transform.gameObject;
+            }
+
+            storedShapes = new List<Shape>();
+            CurrentShapeData = null;
+
+            Debug.Log($"[DropArea] Başlatıldı: {gameObject.name}, Konum: {transform.position}, Collider Size: {areaCollider.size}");
         }
-
-        areaCollider.isTrigger = true;
-        areaCollider.size = colliderSize;
-
-        if (shapeHolder == null)
+        catch (System.Exception ex)
         {
-            shapeHolder = transform.gameObject;
+            Debug.LogError($"[DropArea] InitializeComponents error: {ex.Message}");
         }
-
-        rectTransform = GetComponent<RectTransform>();
-        storedShapes = new List<Shape>();
-        CurrentShapeData = null;
-
-        Debug.Log($"[DropArea] Başlatıldı: {gameObject.name}, Konum: {transform.position}, Collider Size: {areaCollider.size}");
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
+        if (other == null) return;
+        
         Shape shape = other.GetComponent<Shape>();
         if (shape != null)
         {
+            GameEvents.OnShapeEnteredDropArea(shape);
+            shape.isInDropArea = true;
         }
     }
 
     private void OnTriggerExit2D(Collider2D other)
     {
+        if (other == null) return;
+
         Debug.Log($"[DropArea] OnTriggerExit2D - Çıkan nesne: {other.gameObject.name}");
         
         Shape shape = other.GetComponent<Shape>();
         if (shape == null) return;
 
-        // Şekil grid'e yerleştirildiğinde (!_shapeactive) veya drop area'dan alındığında (!isInDropArea) temizle
-        if (storedShapes.Contains(shape) && (!shape._shapeactive || !shape.isInDropArea))
+        lock (_lock)
         {
-            Debug.Log($"[DropArea] Şekil grid'e yerleştirildi veya alındı, temizleniyor: {shape.name}");
-            storedShapes.Remove(shape);
-            if (currentShape == shape)
+            if (storedShapes.Contains(shape))
             {
-                currentShape = null;
-                CurrentShapeData = null;
+                Debug.Log($"[DropArea] Şekil drop area'dan çıktı: {shape.name}");
+                storedShapes.Remove(shape);
+                if (currentShape == shape)
+                {
+                    currentShape = null;
+                    CurrentShapeData = null;
+                }
+                shape.isInDropArea = false;
+                GameEvents.OnShapeLeftDropArea(shape);
+                UpdateStoredShapes();
             }
-            UpdateStoredShapes();
         }
     }
 
@@ -106,119 +130,176 @@ public class DropArea : MonoBehaviour
 
     public void UpdateStoredShapes()
     {
+        if (storedShapes == null) return;
+
         Debug.Log("[DropArea] UpdateStoredShapes başladı");
         
-        // Geçersiz şekilleri temizle
-        for (int i = storedShapes.Count - 1; i >= 0; i--)
+        lock (_lock)
         {
-            Shape shape = storedShapes[i];
-            if (shape == null || (!shape.isInDropArea && !shape._shapeactive))
+            // Geçersiz şekilleri temizle
+            for (int i = storedShapes.Count - 1; i >= 0; i--)
             {
-                Debug.Log($"[DropArea] Geçersiz şekil temizleniyor: {(shape != null ? shape.name : "null")}");
-                storedShapes.RemoveAt(i);
-                if (currentShape == shape)
+                Shape shape = storedShapes[i];
+                if (shape == null || (!shape.isInDropArea && !shape._shapeactive))
                 {
-                    currentShape = null;
-                    CurrentShapeData = null;
+                    Debug.Log($"[DropArea] Geçersiz şekil temizleniyor: {(shape != null ? shape.name : "null")}");
+                    storedShapes.RemoveAt(i);
+                    if (currentShape == shape)
+                    {
+                        currentShape = null;
+                        CurrentShapeData = null;
+                    }
                 }
             }
-        }
-        
-        // CurrentShapeData'yı güncelle
-        if (storedShapes.Count > 0)
-        {
-            currentShape = storedShapes[0];
-            CurrentShapeData = currentShape.CurrentShapeData;
-            isAvailable = false;
-            Debug.Log($"[DropArea] Drop area güncellendi - Mevcut şekil: {currentShape.name}");
-        }
-        else
-        {
-            currentShape = null;
-            CurrentShapeData = null;
-            isAvailable = true;
-            Debug.Log("[DropArea] Drop area boş");
+            
+            // CurrentShapeData'yı güncelle
+            if (storedShapes.Count > 0)
+            {
+                currentShape = storedShapes[0];
+                CurrentShapeData = currentShape?.CurrentShapeData;
+                isAvailable = false;
+                Debug.Log($"[DropArea] Drop area güncellendi - Mevcut şekil: {currentShape?.name ?? "null"}");
+            }
+            else
+            {
+                currentShape = null;
+                CurrentShapeData = null;
+                isAvailable = true;
+                Debug.Log("[DropArea] Drop area boş");
+            }
         }
     }
 
     public bool HasShape()
     {
-        // Sadece storedShapes listesini kontrol et
+        if (storedShapes == null) return false;
         return storedShapes.Count > 0 && storedShapes[0] != null;
     }
 
     public bool StoreShape(Shape shape)
     {
-        Debug.Log($"[DropArea] StoreShape çağrıldı - Shape: {shape.name}, Stored shapes count: {storedShapes.Count}");
-        
-        // Önce mevcut durumu güncelle
-        UpdateStoredShapes();
-        
-        // Drop area'da herhangi bir şekil var mı kontrol et
-        if (storedShapes.Count > 0)
+        if (shape == null)
         {
-            Debug.Log($"[DropArea] Drop area dolu (mevcut şekil: {storedShapes[0].name}), yeni şekil reddediliyor: {shape.name}");
-            shape.MoveShapetoStartPosition();
+            Debug.LogError("[DropArea] StoreShape: shape is null");
             return false;
         }
-        
-        // Drop area tamamen boş, yeni şekil eklenebilir
-        Debug.Log($"[DropArea] Drop area boş, yeni şekil yerleştiriliyor: {shape.name}");
-        storedShapes.Add(shape);
-        currentShape = shape;
-        CurrentShapeData = shape.CurrentShapeData;
-        isAvailable = false;
-        
-        Debug.Log($"[DropArea] Şekil başarıyla eklendi: {shape.name}");
-        return true;
-    }
 
-    private IEnumerator ResetPlacingFlag()
-    {
-        // Bir frame bekle
-        yield return new WaitForEndOfFrame();
-        isPlacingShape = false;
-        Debug.Log("[DropArea] Yerleştirme işlemi tamamlandı, isPlacingShape sıfırlandı");
+        Debug.Log($"[DropArea] StoreShape çağrıldı - Shape: {shape.name}, Stored shapes count: {storedShapes?.Count ?? 0}");
+        
+        try
+        {
+            lock (_lock)
+            {
+                // Drop area dolu mu kontrol et
+                if (storedShapes.Count >= maxStoredShapes)
+                {
+                    Debug.Log("[DropArea] Drop area dolu, yeni şekil reddediliyor");
+                    return false;
+                }
+                
+                // Drop area boş, yeni şekil eklenebilir
+                Debug.Log($"[DropArea] Drop area boş, yeni şekil yerleştiriliyor: {shape.name}");
+                storedShapes.Add(shape);
+                currentShape = shape;
+                CurrentShapeData = shape.CurrentShapeData;
+                isAvailable = false;
+                shape.isInDropArea = true;
+                
+                GameEvents.OnShapeStoredInDropArea(shape);
+                OnShapeStored?.Invoke(shape);
+                
+                Debug.Log($"[DropArea] Şekil başarıyla eklendi: {shape.name}");
+                return true;
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"[DropArea] StoreShape error: {ex.Message}");
+            return false;
+        }
     }
 
     public void RetrieveShape(Shape shape)
     {
-        Debug.Log($"[DropArea] RetrieveShape çağrıldı - Shape: {shape.name}");
-        if (storedShapes.Contains(shape))
+        if (shape == null)
         {
-            Debug.Log($"[DropArea] Shape oyuncu tarafından alınıyor: {shape.name}");
-            shape.RetrieveFromDropArea();
-            storedShapes.Remove(shape);
-            CurrentShapeData = null;
-            UpdateStoredShapes();
+            Debug.LogError("[DropArea] RetrieveShape: shape is null");
+            return;
+        }
+
+        Debug.Log($"[DropArea] RetrieveShape çağrıldı - Shape: {shape.name}");
+        
+        try
+        {
+            lock (_lock)
+            {
+                if (storedShapes.Contains(shape))
+                {
+                    Debug.Log($"[DropArea] Shape oyuncu tarafından alınıyor: {shape.name}");
+                    shape.RetrieveFromDropArea();
+                    shape.isInDropArea = false;  // Şeklin drop area'dan çıktığını işaretle
+                    storedShapes.Remove(shape);
+                    CurrentShapeData = null;
+                    UpdateStoredShapes();
+                    
+                    OnShapeRetrieved?.Invoke(shape);
+                }
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"[DropArea] RetrieveShape error: {ex.Message}");
         }
     }
 
     public void ClearDropArea()
     {
-        Debug.Log($"[DropArea] Drop area temizleniyor - Stored shapes count: {storedShapes.Count}");
-        storedShapes.Clear();
-        currentShape = null;
-        CurrentShapeData = null;
-        isAvailable = true;
-        UpdateStoredShapes(); // Temizlik sonrası listeyi güncelle
+        Debug.Log($"[DropArea] Drop area temizleniyor - Stored shapes count: {storedShapes?.Count ?? 0}");
+        
+        try
+        {
+            lock (_lock)
+            {
+                storedShapes.Clear();
+                currentShape = null;
+                CurrentShapeData = null;
+                isAvailable = true;
+                UpdateStoredShapes();
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"[DropArea] ClearDropArea error: {ex.Message}");
+        }
     }
 
     public bool IsShapeStored(Shape shape)
     {
-        UpdateStoredShapes(); // Kontrol öncesi listeyi güncelle
-        return storedShapes.Contains(shape);
+        if (shape == null || storedShapes == null) return false;
+        
+        lock (_lock)
+        {
+            return storedShapes.Contains(shape);
+        }
     }
 
     public List<Shape> GetStoredShapes()
     {
-        UpdateStoredShapes(); // Liste alınmadan önce güncelle
-        return storedShapes;
+        if (storedShapes == null) return new List<Shape>();
+        
+        lock (_lock)
+        {
+            return new List<Shape>(storedShapes);
+        }
     }
 
     public bool CanStoreShape()
     {
-        UpdateStoredShapes(); // Kontrol öncesi listeyi güncelle
-        return !HasShape() && storedShapes.Count < maxStoredShapes;
+        if (storedShapes == null) return false;
+        
+        lock (_lock)
+        {
+            return !HasShape() && storedShapes.Count < maxStoredShapes;
+        }
     }
 }
