@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using System.Linq;
 
 public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerDownHandler
 {
@@ -439,7 +440,16 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
                 }
                 isInDropArea = false;
                 MoveShapetoStartPosition();
-                GameEvents.OnRequestNewShapes(); // Yeni şekil talebi
+
+                // Yerleştirilebilir şekil kontrolü
+                bool anyPlaceableShapes = ShapeStorage.Instance.ShapeList.Any(shape => 
+                    shape.gameObject.activeSelf && shape.IsonStartPosition());
+
+                if (!anyPlaceableShapes)
+                {
+                    Debug.Log("[Shape] Yerleştirilebilir şekil kalmadı, yeni şekiller talep ediliyor");
+                    GameEvents.RequestNewShapeMethod();
+                }
             }
         }
         else
@@ -459,19 +469,38 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
                 }
                 isInDropArea = false;
                 MoveShapetoStartPosition();
-                GameEvents.OnRequestNewShapes(); // Yeni şekil talebi
+
+                // Yerleştirilebilir şekil kontrolü
+                bool anyPlaceableShapes = ShapeStorage.Instance.ShapeList.Any(shape => 
+                    shape.gameObject.activeSelf && shape.IsonStartPosition());
+
+                if (!anyPlaceableShapes)
+                {
+                    Debug.Log("[Shape] Yerleştirilebilir şekil kalmadı, yeni şekiller talep ediliyor");
+                    GameEvents.RequestNewShapeMethod();
+                }
             }
             else
             {
                 Debug.Log("[Shape] Şekil grid'e yerleştirildi");
-                // Grid'e yerleştirildiğinde şeklin görünürlüğünü kapat
-                foreach (var square in _currentShape)
+
+                if (this is ColorSquare)
                 {
-                    if (square != null)
+                    _shapeactive = false;
+                    GameEvents.TriggerOneByOneBlockExplosionMethod(shapeColor);
+                }
+                else
+                {
+                    // Grid'e yerleştirildiğinde şeklin görünürlüğünü kapat
+                    foreach (var square in _currentShape)
                     {
-                        square.SetActive(false);
+                        if (square != null)
+                        {
+                            square.SetActive(false);
+                        }
                     }
                 }
+
                 // Drop area referanslarını temizle
                 if (currentDropArea != null)
                 {
@@ -479,6 +508,16 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
                     currentDropArea = null;
                 }
                 isInDropArea = false;
+
+                // Yerleştirilebilir şekil kontrolü
+                bool anyPlaceableShapes = ShapeStorage.Instance.ShapeList.Any(shape => 
+                    shape.gameObject.activeSelf && shape.IsonStartPosition());
+
+                if (!anyPlaceableShapes)
+                {
+                    Debug.Log("[Shape] Yerleştirilebilir şekil kalmadı, yeni şekiller talep ediliyor");
+                    GameEvents.RequestNewShapeMethod();
+                }
             }
         }
     }
