@@ -193,12 +193,18 @@ public class DropArea : MonoBehaviour
                 // Drop area dolu mu kontrol et
                 if (storedShapes.Count >= maxStoredShapes)
                 {
-                    Debug.Log("[DropArea] Drop area dolu, yeni şekil reddediliyor");
-                    return false;
+                    // Eğer drop area doluysa, mevcut şekli çıkar
+                    if (storedShapes.Count > 0)
+                    {
+                        Shape oldShape = storedShapes[0];
+                        storedShapes.RemoveAt(0);
+                        oldShape.RetrieveFromDropArea();
+                        GameEvents.OnShapeLeftDropArea(oldShape);
+                    }
                 }
                 
-                // Drop area boş, yeni şekil eklenebilir
-                Debug.Log($"[DropArea] Drop area boş, yeni şekil yerleştiriliyor: {shape.name}");
+                // Yeni şekli ekle
+                Debug.Log($"[DropArea] Yeni şekil yerleştiriliyor: {shape.name}");
                 storedShapes.Add(shape);
                 currentShape = shape;
                 CurrentShapeData = shape.CurrentShapeData;

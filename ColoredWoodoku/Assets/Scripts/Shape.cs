@@ -431,8 +431,8 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
             }
             else
             {
-                // Başarısızsa eski pozisyona dön ve yeni şekil iste
-                Debug.Log("[Shape] Drop area dolu, şekil başlangıca dönüyor");
+                // Başarısızsa eski pozisyona dön
+                Debug.Log("[Shape] Drop area'ya yerleştirilemedi, şekil başlangıca dönüyor");
                 if (currentDropArea != null)
                 {
                     currentDropArea.RetrieveShape(this);
@@ -440,16 +440,6 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
                 }
                 isInDropArea = false;
                 MoveShapetoStartPosition();
-
-                // Yerleştirilebilir şekil kontrolü
-                bool anyPlaceableShapes = ShapeStorage.Instance.ShapeList.Any(shape => 
-                    shape.gameObject.activeSelf && shape.IsonStartPosition());
-
-                if (!anyPlaceableShapes)
-                {
-                    Debug.Log("[Shape] Yerleştirilebilir şekil kalmadı, yeni şekiller talep ediliyor");
-                    GameEvents.RequestNewShapeMethod();
-                }
             }
         }
         else
@@ -469,16 +459,6 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
                 }
                 isInDropArea = false;
                 MoveShapetoStartPosition();
-
-                // Yerleştirilebilir şekil kontrolü
-                bool anyPlaceableShapes = ShapeStorage.Instance.ShapeList.Any(shape => 
-                    shape.gameObject.activeSelf && shape.IsonStartPosition());
-
-                if (!anyPlaceableShapes)
-                {
-                    Debug.Log("[Shape] Yerleştirilebilir şekil kalmadı, yeni şekiller talep ediliyor");
-                    GameEvents.RequestNewShapeMethod();
-                }
             }
             else
             {
@@ -508,17 +488,17 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
                     currentDropArea = null;
                 }
                 isInDropArea = false;
-
-                // Yerleştirilebilir şekil kontrolü
-                bool anyPlaceableShapes = ShapeStorage.Instance.ShapeList.Any(shape => 
-                    shape.gameObject.activeSelf && shape.IsonStartPosition());
-
-                if (!anyPlaceableShapes)
-                {
-                    Debug.Log("[Shape] Yerleştirilebilir şekil kalmadı, yeni şekiller talep ediliyor");
-                    GameEvents.RequestNewShapeMethod();
-                }
             }
+        }
+
+        // Yerleştirilebilir şekil kontrolü
+        bool anyPlaceableShapes = ShapeStorage.Instance.ShapeList.Any(shape => 
+            shape.gameObject.activeSelf && shape.IsonStartPosition());
+
+        if (!anyPlaceableShapes)
+        {
+            Debug.Log("[Shape] Yerleştirilebilir şekil kalmadı, yeni şekiller talep ediliyor");
+            GameEvents.RequestNewShapeMethod();
         }
     }
 
