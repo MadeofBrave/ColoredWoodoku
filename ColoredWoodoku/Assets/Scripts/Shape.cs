@@ -69,6 +69,20 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
         _startPosition = transform.localPosition;
         _shapeactive = true;
 
+        // Ana objenin Image bileşeninin raycastTarget'ını kapat
+        var mainImage = GetComponent<Image>();
+        if (mainImage != null)
+        {
+            mainImage.raycastTarget = false;
+        }
+
+        // Tüm child objelerin Image bileşenlerinin raycastTarget'ını kapat
+        var childImages = GetComponentsInChildren<Image>();
+        foreach (var image in childImages)
+        {
+            image.raycastTarget = false;
+        }
+
         System.Random random = new System.Random();
         SetColor(shapeColor);
     }
@@ -393,14 +407,37 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
 
     public virtual bool CheckIfOneByOneBlockCanBePlaced()
     {
+        Debug.Log($"[Shape] CheckIfOneByOneBlockCanBePlaced başladı - Shape: {gameObject.name}");
+        
         bool canPlaceShape = false;
         GameEvents.CheckIfShapeCanBePlacedMethod();
         canPlaceShape = true;
 
-        // Eğer şekil yerleştirilebiliyorsa, tüm drop area referanslarını temizle
         if (canPlaceShape)
         {
-           // CleanupDropAreaReferences();
+            // Grid'e yerleştirme başarılı oldu
+            _shapeactive = false;
+            
+            // Drop area'dan gelmediyse referansları temizle
+            if (!isInDropArea)
+            {
+                Debug.Log("[Shape] Drop area'dan gelmediği için referanslar temizleniyor");
+                if (currentDropArea != null)
+                {
+                    currentDropArea.ClearDropArea();
+                    currentDropArea = null;
+                }
+                isInDropArea = false;
+                isBeingRetrieved = false;
+            }
+            else
+            {
+                Debug.Log("[Shape] Drop area'dan geldiği için referanslar korunuyor");
+            }
+        }
+        else
+        {
+            Debug.Log("[Shape] Shape yerleştirilemedi");
         }
 
         return canPlaceShape;
@@ -410,7 +447,6 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
     {
         Debug.Log($"[Shape] Drop area referansları temizleniyor - Shape: {gameObject.name}");
         
-        // Drop area referanslarını temizle
         if (currentDropArea != null)
         {
             currentDropArea.ClearDropArea();
@@ -441,6 +477,22 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
         holdTime = 0f;
     }
 
+    private bool AnyOtherActiveShapeOnBoard()
+    {
+        Shape[] allShapes = FindObjectsOfType<Shape>();
+        foreach (var s in allShapes)
+        {
+            // DropArea'da olmayan, kendisi olmayan ve aktif bir shape varsa true döner
+            if (!s.isInDropArea && s._shapeactive && s != this)
+            {
+                Debug.Log($"[Shape] Aktif şekil bulundu: {s.name}");
+                return true;
+            }
+        }
+        Debug.Log("[Shape] Sahnede başka aktif şekil bulunamadı");
+        return false;
+    }
+
     public virtual void OnEndDrag(PointerEventData eventData)
     {
         Debug.Log($"[Shape] OnEndDrag başladı - Shape: {gameObject.name}");
@@ -450,11 +502,27 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
         if (dropArea != null)
         {
             Debug.Log($"[Shape] Drop Area bulundu: {dropArea.gameObject.name}");
+            
+            // Drop area'ya yerleştirmeyi dene
             bool placed = dropArea.StoreShape(this);
             if (placed)
             {
                 StoreInDropArea(dropArea);
                 Debug.Log("[Shape] Şekil başarıyla drop area'ya yerleştirildi");
+                return;
+            }
+            else
+            {
+                // Drop area doluysa şekil başlangıç pozisyonuna dönmeli
+                Debug.Log("[Shape] Drop area dolu olduğu için yerleştirilemedi");
+                MoveShapetoStartPosition();
+                
+                // Hiç başka şekil var mı?
+                if (!AnyOtherActiveShapeOnBoard())
+                {
+                    Debug.Log("[Shape] Sahnede başka şekil kalmadı, yeni şekiller isteniyor");
+                    GameEvents.RequestNewShapeMethod();
+                }
                 return;
             }
         }
@@ -463,7 +531,6 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
         bool shapePlaced = CheckIfOneByOneBlockCanBePlaced();
         if (shapePlaced)
         {
-            CleanupDropAreaReferences(); // Grid'e yerleştirildiğinde referansları temizle
             if (this is ColorSquare)
             {
                 GameEvents.TriggerOneByOneBlockExplosionMethod(shapeColor);
@@ -513,8 +580,10 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
 
         Debug.Log($"[Shape] StoreInDropArea çağrıldı - Shape: {gameObject.name}");
         
+        // Drop area'ya yerleştirme işlemi
         isInDropArea = true;
         currentDropArea = dropArea;
+        _shapeactive = true; // Drop area'da aktif olmalı
         
         // RectTransform kullanarak merkeze yerleştir
         RectTransform dropAreaRect = dropArea.shapeHolder.GetComponent<RectTransform>();
@@ -526,9 +595,16 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
             
             transform.position = center;
             transform.localScale = _shapeStartScale;
+            
+            Debug.Log($"[Shape] {gameObject.name} drop area'ya yerleştirildi - Pozisyon: {center}");
         }
-    
-        Debug.Log($"[Shape] {gameObject.name} drop area'ya yerleştirildi");
+
+        // Eğer sahnede başka aktif şekil yoksa yeni şekiller iste
+        if (!AnyOtherActiveShapeOnBoard())
+        {
+            Debug.Log("[Shape] Sahnede başka aktif şekil kalmadı, yeni şekiller isteniyor");
+            GameEvents.RequestNewShapeMethod();
+        }
     }
 
     public void RetrieveFromDropArea()
@@ -537,13 +613,9 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
 
         Debug.Log($"[Shape] RetrieveFromDropArea başladı - Shape: {gameObject.name}");
         
-        // Referansları temizle
         isInDropArea = false;
         currentDropArea = null;
-        
-        // Şekli aktif et
-        gameObject.SetActive(true);
-        _shapeactive = true;
+        _shapeactive = true; // Drop area'dan çıkarıldığında aktif olmalı
         
         Debug.Log($"[Shape] {gameObject.name} drop area'dan çıkarıldı");
     }

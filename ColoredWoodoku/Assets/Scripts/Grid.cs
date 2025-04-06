@@ -139,7 +139,7 @@ public class Grid : MonoBehaviour
 
         if (currentSelectedShape.TotalSquareNumber != squareIndexes.Count)
         {
-            GameEvents.MoveShapetoStartPositionMethod();
+            currentSelectedShape.MoveShapetoStartPosition();
             return;
         }
 
@@ -147,7 +147,7 @@ public class Grid : MonoBehaviour
 
         if (!canPlaceShape)
         {
-            GameEvents.MoveShapetoStartPositionMethod();
+            currentSelectedShape.MoveShapetoStartPosition();
             return;
         }
 

@@ -287,6 +287,8 @@ MonoBehaviour:
   shapeSelectedScale: {x: 0, y: 0}
   offset: {x: 0, y: 700}
   CurrentShapeData: {fileID: 0}
+  currentDropArea: {fileID: 0}
+  isInDropArea: 0
   shapeColor: 0
   blueSprite: {fileID: 21300000, guid: 0aa61beabb0c38342b82ebc0535755dc, type: 3}
   greenSprite: {fileID: 21300000, guid: 0aa61beabb0c38342b82ebc0535755dc, type: 3}
@@ -728,6 +730,8 @@ MonoBehaviour:
   shapeSelectedScale: {x: 0, y: 0}
   offset: {x: 0, y: 700}
   CurrentShapeData: {fileID: 0}
+  currentDropArea: {fileID: 0}
+  isInDropArea: 0
   shapeColor: 0
   blueSprite: {fileID: 21300000, guid: b5d357f895f8fd24da278a270236711d, type: 3}
   greenSprite: {fileID: 21300000, guid: b5d357f895f8fd24da278a270236711d, type: 3}
@@ -2313,6 +2317,8 @@ MonoBehaviour:
   shapeSelectedScale: {x: 0, y: 0}
   offset: {x: 0, y: 700}
   CurrentShapeData: {fileID: 0}
+  currentDropArea: {fileID: 0}
+  isInDropArea: 0
   shapeColor: 2
   blueSprite: {fileID: 21300000, guid: 0b86fa557b0915a45881a65ae36e4ce4, type: 3}
   greenSprite: {fileID: 21300000, guid: 7ee4b69e4d746544287a82af15337c5e, type: 3}
@@ -2745,6 +2751,11 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1515514955 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5796628965249785549, guid: 794ffaf466cec534686fb5bb4b6c67fc, type: 3}
+  m_PrefabInstance: {fileID: 3631654104875518964}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1551857529
 GameObject:
   m_ObjectHideFlags: 0
@@ -3607,6 +3618,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 239698759}
     m_Modifications:
+    - target: {fileID: 442063602662950682, guid: 794ffaf466cec534686fb5bb4b6c67fc, type: 3}
+      propertyPath: m_RaycastTarget
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4047114207395656324, guid: 794ffaf466cec534686fb5bb4b6c67fc, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5459965440012144086, guid: 794ffaf466cec534686fb5bb4b6c67fc, type: 3}
+      propertyPath: shapeHolder
+      value: 
+      objectReference: {fileID: 1515514955}
     - target: {fileID: 5803599694715184109, guid: 794ffaf466cec534686fb5bb4b6c67fc, type: 3}
       propertyPath: m_Name
       value: DropArea
