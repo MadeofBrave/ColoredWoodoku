@@ -130,24 +130,18 @@ public class Grid : MonoBehaviour
                 gridSquare.Selected = false;
             }
         }
-
-        // Seçilen şekli bul - drop area'daki şekiller hariç
         var currentSelectedShape = shapeStorage.GetCurrentSelectedShape();
         if (currentSelectedShape == null)
         {
-            Debug.Log("[Grid] Seçilen şekil bulunamadı, işlem sonlandırılıyor");
             return;
         }
 
-        // Şeklin bilgilerini sakla
         string shapeName = currentSelectedShape.gameObject.name;
         ShapeColor shapeColor = currentSelectedShape.shapeColor;
         
-        Debug.Log($"[Grid] Şekil işleniyor - Shape: {shapeName}, Color: {shapeColor}");
 
         if (currentSelectedShape.TotalSquareNumber != squareIndexes.Count)
         {
-            Debug.Log($"[Grid] Kare sayısı uyuşmuyor - Shape: {shapeName}, Expected: {currentSelectedShape.TotalSquareNumber}, Found: {squareIndexes.Count}");
             currentSelectedShape.MoveShapetoStartPosition();
             return;
         }
@@ -156,17 +150,12 @@ public class Grid : MonoBehaviour
 
         if (!canPlaceShape)
         {
-            Debug.Log($"[Grid] Kareler kullanılamaz - Shape: {shapeName}");
             currentSelectedShape.MoveShapetoStartPosition();
             return;
         }
 
-        Debug.Log($"[Grid] Şekil yerleştiriliyor - Shape: {shapeName}, Color: {shapeColor}, Square count: {squareIndexes.Count}");
-
-        // Grid'e yerleştirme işlemini yap
         PlaceShapeOnGrid(currentSelectedShape, squareIndexes, shapeColor);
 
-        // Diğer işlemler
         bool anyShapeLeft = shapeStorage.ShapeList.Any(shape => 
             shape.gameObject.activeSelf && 
             !shape.isInDropArea &&
@@ -185,22 +174,15 @@ public class Grid : MonoBehaviour
         CheckIfAnyLineIsCompleted();
     }
     
-    // Şekli gride yerleştirme işlemi için ayrı bir metot
     private void PlaceShapeOnGrid(Shape shape, List<int> squareIndexes, ShapeColor color)
     {
-        Debug.Log($"[Grid] PlaceShapeOnGrid - Shape: {shape.gameObject.name}, Color: {color}");
-        
-        // Şeklin joker olup olmadığını kontrol et
         bool isJoker = shape is JokerSquare;
         
-        // Karelere yerleştirme işlemini yap
         foreach (var squareIndex in squareIndexes)
         {
-            Debug.Log($"[Grid] Kare yerleştiriliyor - SquareIndex: {squareIndex}, Color: {color}");
             _GridSquares[squareIndex].GetComponent<GridSquare>().PlaceShapeOnBoard(color, isJoker);
         }
         
-        // Şeklin aktifliğini kapat
         shape._shapeactive = false;
     }
 
@@ -407,7 +389,6 @@ public class Grid : MonoBehaviour
 
                 var comp = _GridSquares[number[squareIndexToCheck]].GetComponent<GridSquare>();
 
-                // Sadece kare dolu mu diye kontrol et
                 if (comp.SquareOccupied)
                 {
                     shapeCanBePlacedOnTheBoard = false;

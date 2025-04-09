@@ -117,7 +117,6 @@ public class HammerSquare : Shape, IBeginDragHandler, IDragHandler, IEndDragHand
 
         if (!Scores.Instance.HasEnoughPoints(hammerCost))
         {
-            Debug.Log("HammerSquare: Yeterli puan yok, en az " + hammerCost + " puan gerekli.");
             MoveShapetoStartPosition();
             return;
         }
