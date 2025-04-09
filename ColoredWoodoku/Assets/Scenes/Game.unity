@@ -740,6 +740,7 @@ MonoBehaviour:
   _shapeactive: 1
   shapeStorage: {fileID: 1551857531}
   shapeCost: 25
+  jokerShapeData: {fileID: 11400000, guid: 6c29f915232ff22459456ce54eff0f79, type: 2}
 --- !u!225 &671198524
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -3731,6 +3732,10 @@ PrefabInstance:
       propertyPath: isHorizontal
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 3519915213242365066, guid: 92d6e977c5ac8bd4f91b149cb0a1ea28, type: 3}
+      propertyPath: lineEraserShapeData
+      value: 
+      objectReference: {fileID: 11400000, guid: 6c29f915232ff22459456ce54eff0f79, type: 2}
     - target: {fileID: 3773156249373510214, guid: 92d6e977c5ac8bd4f91b149cb0a1ea28, type: 3}
       propertyPath: m_Name
       value: HorizontalHammer
@@ -4036,6 +4041,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: VerticalHammer
       objectReference: {fileID: 0}
+    - target: {fileID: 5615387224596675607, guid: 8cff8dc59be7ed24eb4b2f7c8e5e65bc, type: 3}
+      propertyPath: lineEraserShapeData
+      value: 
+      objectReference: {fileID: 11400000, guid: 6c29f915232ff22459456ce54eff0f79, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -4350,6 +4359,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: GlobalHammer
       objectReference: {fileID: 0}
+    - target: {fileID: 5694786674945405932, guid: dd1e08c690a905e42b6ef9dc7a164732, type: 3}
+      propertyPath: globalHammerShapeData
+      value: 
+      objectReference: {fileID: 11400000, guid: 6c29f915232ff22459456ce54eff0f79, type: 2}
     - target: {fileID: 7067138309024402983, guid: dd1e08c690a905e42b6ef9dc7a164732, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5

@@ -60,34 +60,44 @@ public class ShapeStorage : MonoBehaviour
 
     public Shape GetCurrentSelectedShape()
     {
-        if (colorSquare != null && colorSquare.gameObject.activeSelf &&
-            !colorSquare.IsonStartPosition() && colorSquare.IsAnyOfShapeSquareActive())
-        {
-            return colorSquare;
-        }
-
-        if (jokerSquare != null && jokerSquare.gameObject.activeSelf &&
-            !jokerSquare.IsonStartPosition() && jokerSquare.IsAnyOfShapeSquareActive())
-        {
-            return jokerSquare;
-        }
-
+        // Drop area'daki şekilleri tamamen dışla
         foreach (var shape in ShapeList)
         {
-            if (!shape.gameObject.activeSelf)
+            // Şekil drop area'da ise atla
+            if (shape.isInDropArea)
             {
                 continue;
             }
-
-            if (!shape.IsonStartPosition() && shape.IsAnyOfShapeSquareActive())
+                
+            // Sadece aktif ve başlangıç pozisyonunda olmayan şekilleri kontrol et
+            if (shape.gameObject.activeSelf && !shape.IsonStartPosition() && shape.IsAnyOfShapeSquareActive())
             {
+                Debug.Log($"[ShapeStorage] Sürüklenen şekil bulundu: {shape.gameObject.name}, Color: {shape.shapeColor}");
                 return shape;
             }
         }
 
-        bool anyActiveShape = ShapeList.Any(shape => shape.gameObject.activeSelf);
+        // Özel şekilleri kontrol et
+        if (colorSquare != null && colorSquare.gameObject.activeSelf && 
+            !colorSquare.IsonStartPosition() && colorSquare.IsAnyOfShapeSquareActive() && 
+            !colorSquare.isInDropArea)
+        {
+            Debug.Log($"[ShapeStorage] Sürüklenen ColorSquare bulundu: {colorSquare.gameObject.name}");
+            return colorSquare;
+        }
+
+        if (jokerSquare != null && jokerSquare.gameObject.activeSelf && 
+            !jokerSquare.IsonStartPosition() && jokerSquare.IsAnyOfShapeSquareActive() && 
+            !jokerSquare.isInDropArea)
+        {
+            Debug.Log($"[ShapeStorage] Sürüklenen JokerSquare bulundu: {jokerSquare.gameObject.name}");
+            return jokerSquare;
+        }
+
+        bool anyActiveShape = ShapeList.Any(shape => shape.gameObject.activeSelf && !shape.isInDropArea);
         if (!anyActiveShape)
         {
+            Debug.Log("[ShapeStorage] Aktif şekil bulunamadı, yeni şekiller talep ediliyor");
             GameEvents.RequestNewShapeMethod();
         }
 
@@ -137,6 +147,7 @@ public class ShapeStorage : MonoBehaviour
                 continue;
             }
 
+            // Drop area'da olmayan şekilleri yenile
             if (shape is HammerSquare || shape is LineEraser)
             {
                 shape.RequestNewShape(shapeData[6]);
@@ -145,10 +156,9 @@ public class ShapeStorage : MonoBehaviour
             {
                 var shapeIndex = UnityEngine.Random.Range(0, shapeData.Count);
                 shape.RequestNewShape(shapeData[shapeIndex]);
-
                 shape.shapeColor = shape.GetRandomShapeColor();
                 shape.SetColor(shape.shapeColor);
-                shape.gameObject.SetActive(true); 
+                shape.gameObject.SetActive(true);
             }
             renewedShapes++;
         }
