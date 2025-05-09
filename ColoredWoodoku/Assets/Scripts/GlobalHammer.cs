@@ -93,6 +93,5 @@ public class ClearBoardHammer : Shape
             square.ClearOccupied();
         }
 
-        Debug.Log("Tahta temizlendi!");
     }
 }

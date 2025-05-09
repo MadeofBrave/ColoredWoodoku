@@ -15,8 +15,6 @@ public class JokerSquare : Shape
     public override void Awake()
     {
         base.Awake();
-        
-        // Image bileşenlerinin Raycast Target özelliğini aç
         var mainImage = GetComponent<UnityEngine.UI.Image>();
         if (mainImage != null)
         {
@@ -62,7 +60,6 @@ public class JokerSquare : Shape
     {
         base.OnEnable();
 
-        // Image bileşenlerinin Raycast Target özelliğini aç
         var mainImage = GetComponent<UnityEngine.UI.Image>();
         if (mainImage != null)
         {
@@ -167,7 +164,6 @@ public class JokerSquare : Shape
             }
             _shapeactive = false;
             
-            // Şekli yeniden oluştur
             if (jokerShapeData != null)
             {
                 CreateShape(jokerShapeData);

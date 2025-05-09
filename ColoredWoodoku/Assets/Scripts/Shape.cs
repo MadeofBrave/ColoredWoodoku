@@ -18,7 +18,7 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
     private Vector3 originalPosition;
     public DropArea currentDropArea;
     private Vector3 startPosition;
-    private bool isDragging = false;
+    protected bool isDragging = false;
     public bool isInDropArea = false;
     private Vector3 dropAreaPosition;
     private bool isBeingRetrieved = false;
@@ -43,10 +43,10 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
     public Vector3 _startPosition;
 
     public bool _shapeactive = true;
-    private float holdTime = 0f;
-    private float requiredHoldTime = 1f;
-    private bool isHolding = false;
-    private Vector2 holdStartPosition;
+    protected float holdTime = 0f;
+    protected float requiredHoldTime = 1f;
+    protected bool isHolding = false;
+    protected Vector2 holdStartPosition;
 
     public static Dictionary<ShapeColor, int> colorCosts = new Dictionary<ShapeColor, int>()
     {
@@ -417,7 +417,6 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
 
         if (isOverDropArea)
         {
-            
             bool isStored = dropArea.StoreShape(this);
             
             if (isStored)
@@ -466,12 +465,12 @@ public class Shape : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IBe
         }
 
         bool anyPlaceableShapes = ShapeStorage.Instance.ShapeList.Any(shape => 
-            shape.gameObject.activeSelf && shape.IsonStartPosition());
+            shape.gameObject.activeSelf && 
+            shape.IsonStartPosition() && 
+            !shape.isInDropArea &&
+            shape.IsAnyOfShapeSquareActive());
 
-        if (!anyPlaceableShapes)
-        {
-            GameEvents.RequestNewShapeMethod();
-        }
+      
     }
     
     public virtual bool CheckIfShapeCanBePlacedOnGrid()

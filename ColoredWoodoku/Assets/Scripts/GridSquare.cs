@@ -106,10 +106,7 @@ public class GridSquare : MonoBehaviour
         {
             normalImage.sprite = colorSprites[index];
         }
-        else
-        {
-            Debug.LogWarning("Color index out of range: " + index);
-        }
+        
     }
 
     public void ActivateSquare()

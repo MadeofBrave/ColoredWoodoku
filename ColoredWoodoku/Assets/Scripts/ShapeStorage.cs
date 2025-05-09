@@ -12,6 +12,7 @@ public class ShapeStorage : MonoBehaviour
 
     private void Awake()
     {
+        RequestNewShape();
         if (Instance == null)
         {
             Instance = this;
@@ -53,6 +54,8 @@ public class ShapeStorage : MonoBehaviour
                 shape.CreateShape(shapeData[6]);
                 continue;
             }
+            
+            // Initial shapes - these will be replaced when network game starts
             var shapeIndex = UnityEngine.Random.Range(0, shapeData.Count);
             shape.CreateShape(shapeData[shapeIndex]);
         }
@@ -88,7 +91,14 @@ public class ShapeStorage : MonoBehaviour
         bool anyActiveShape = ShapeList.Any(shape => shape.gameObject.activeSelf && !shape.isInDropArea);
         if (!anyActiveShape)
         {
-            GameEvents.RequestNewShapeMethod();
+            if (GameNetworkManager.Instance != null)
+            {
+                GameNetworkManager.Instance.LocalPlayerFinishedPlacingShapes();
+            }
+            else
+            {
+                GameEvents.RequestNewShapeMethod();
+            }
         }
 
         return null;
@@ -96,6 +106,8 @@ public class ShapeStorage : MonoBehaviour
 
     public void RequestNewShape()
     {
+        Debug.Log("RequestNewShape called on ShapeStorage");
+        
         var dropArea = FindObjectOfType<DropArea>();
         var shapesInDropArea = dropArea != null ? dropArea.GetStoredShapes() : new List<Shape>();
         RefreshSpecialShapes(shapesInDropArea);
@@ -113,6 +125,12 @@ public class ShapeStorage : MonoBehaviour
 
         if (colorSquare != null && !shapesInDropArea.Contains(colorSquare))
         {
+            // Apply synchronized explosion color if in networked game
+            if (GameNetworkManager.Instance != null)
+            {
+                GameNetworkManager.Instance.ApplySyncedExplosionColor();
+            }
+            
             if (GameEvents.LastExplosionColor == Shape.ShapeColor.None)
             {
                 colorSquare.gameObject.SetActive(false);
@@ -129,6 +147,14 @@ public class ShapeStorage : MonoBehaviour
 
     private void RefreshNormalShapes(List<Shape> shapesInDropArea)
     {
+        // In networked games, wait for shapes to be ready before refreshing
+        if (GameNetworkManager.Instance != null && !GameNetworkManager.Instance.AreShapesReadyToUse())
+        {
+            Debug.LogWarning("Network shapes not ready yet, waiting for server");
+            return;
+        }
+        
+        Debug.Log("Refreshing normal shapes");
         int renewedShapes = 0;
         
         foreach (var shape in ShapeList)
@@ -144,10 +170,28 @@ public class ShapeStorage : MonoBehaviour
             }
             else
             {
-                var shapeIndex = UnityEngine.Random.Range(0, shapeData.Count);
+                // Use synced values from GameNetworkManager if available
+                int shapeIndex;
+                Shape.ShapeColor shapeColor;
+                
+                if (GameNetworkManager.Instance != null)
+                {
+                    // Get synchronized shape index and color from network manager
+                    shapeIndex = GameNetworkManager.Instance.GetSyncedShapeIndex(renewedShapes);
+                    shapeColor = GameNetworkManager.Instance.GetSyncedShapeColor(renewedShapes);
+                    Debug.Log($"Using synced shape from server: Type={shapeIndex}, Color={shapeColor}");
+                }
+                else
+                {
+                    // Fallback to local random if network manager not available
+                    shapeIndex = UnityEngine.Random.Range(0, shapeData.Count);
+                    shapeColor = shape.GetRandomShapeColor();
+                    Debug.Log($"Using local random shape: Type={shapeIndex}, Color={shapeColor}");
+                }
+                
                 shape.RequestNewShape(shapeData[shapeIndex]);
-                shape.shapeColor = shape.GetRandomShapeColor();
-                shape.SetColor(shape.shapeColor);
+                shape.shapeColor = shapeColor;
+                shape.SetColor(shapeColor);
                 shape.gameObject.SetActive(true);
             }
             

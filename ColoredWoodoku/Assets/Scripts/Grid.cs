@@ -38,13 +38,14 @@ public class Grid : MonoBehaviour
     {
         GameEvents.CheckIfShapeCanBePlaced += CheckIfShapeCanBePlaced;
         GameEvents.UseHammer += HandleHammerUsage;
-
+        GameEvents.RequestNewShape += OnRequestNewShape;
     }
 
     private void OnDisable()
     {
         GameEvents.CheckIfShapeCanBePlaced -= CheckIfShapeCanBePlaced;
         GameEvents.UseHammer -= HandleHammerUsage;
+        GameEvents.RequestNewShape -= OnRequestNewShape;
     }
 
     private void HandleHammerUsage(int squareIndex)
@@ -164,7 +165,15 @@ public class Grid : MonoBehaviour
 
         if (!anyShapeLeft)
         {
-            GameEvents.RequestNewShapeMethod();
+            if (GameNetworkManager.Instance != null)
+            {
+                 GameNetworkManager.Instance.LocalPlayerFinishedPlacingShapes();
+            }
+            else
+            {
+                GameEvents.RequestNewShapeMethod(); 
+            }
+           
         }
         else
         {
@@ -172,6 +181,8 @@ public class Grid : MonoBehaviour
         }
 
         CheckIfAnyLineIsCompleted();
+        
+        StartCoroutine(CheckPlayerLostAfterDelay());
     }
     
     private void PlaceShapeOnGrid(Shape shape, List<int> squareIndexes, ShapeColor color)
@@ -330,81 +341,78 @@ public class Grid : MonoBehaviour
     private void CheckIfPlayerLost()
     {
         var validShapes = 0;
+        var totalActiveShapes = 0;
 
         foreach (var shape in shapeStorage.ShapeList)
         {
-            bool isShapeActive = shape.IsAnyOfShapeSquareActive();
-            bool canBePlaced = CheckIfShapeCanBePlacedOnGrid(shape);
-
-
-            if (canBePlaced && isShapeActive)
+            if (shape.isInDropArea || !shape.gameObject.activeSelf || !shape.IsAnyOfShapeSquareActive())
             {
-                shape.ActivateShape();
+                continue;
+            }
+
+            totalActiveShapes++;
+            
+            if (CheckIfShapeCanBePlacedOnGrid(shape))
+            {
                 validShapes++;
             }
         }
 
-        if (validShapes == 0)
+        if (totalActiveShapes > 0 && validShapes == 0)
         {
-            Debug.Log("OYUNCU KAYBETTİ!");
             GameEvents.GameOverMethod(false);
         }
     }
 
-
     private bool CheckIfShapeCanBePlacedOnGrid(Shape currentShape)
     {
         var currentShapeData = currentShape.CurrentShapeData;
+        if (currentShapeData == null)
+        {
+            return false;
+        }
+            
         var shapeColumns = currentShapeData.columns;
         var shapeRows = currentShapeData.rows;
 
-        List<int> originalShapeFilledUpSquares = new List<int>();
-        var squareIndex = 0;
-
-        for (var rowIndex = 0; rowIndex < shapeRows; rowIndex++)
+        for (int row = 0; row <= 9 - shapeRows; row++)
         {
-            for (var columnIndex = 0; columnIndex < shapeColumns; columnIndex++)
+            for (int col = 0; col <= 9 - shapeColumns; col++)
             {
-                if (currentShapeData.board[rowIndex].column[columnIndex])
+                bool canPlaceHere = true;
+
+                for (int shapeRow = 0; shapeRow < shapeRows && canPlaceHere; shapeRow++)
                 {
-                    originalShapeFilledUpSquares.Add(squareIndex);
+                    for (int shapeCol = 0; shapeCol < shapeColumns && canPlaceHere; shapeCol++)
+                    {
+                        if (currentShapeData.board[shapeRow].column[shapeCol])
+                        {
+                            int gridIndex = (row + shapeRow) * 9 + (col + shapeCol);
+                            
+                            if (gridIndex < 0 || gridIndex >= _GridSquares.Count)
+                            {
+                                canPlaceHere = false;
+                                continue;
+                            }
+
+                            var gridSquare = _GridSquares[gridIndex].GetComponent<GridSquare>();
+                            if (gridSquare.SquareOccupied)
+                            {
+                                canPlaceHere = false;
+                            }
+                        }
+                    }
                 }
-                squareIndex++;
+
+                if (canPlaceHere)
+                {
+                    return true;
+                }
             }
         }
-
-        var squareList = GetAllSquaresCombination(shapeColumns, shapeRows);
-        bool canBePlaced = false;
-
-        foreach (var number in squareList)
-        {
-            bool shapeCanBePlacedOnTheBoard = true;
-            foreach (var squareIndexToCheck in originalShapeFilledUpSquares)
-            {
-                if (squareIndexToCheck >= number.Length)
-                {
-                    shapeCanBePlacedOnTheBoard = false;
-                    break;
-                }
-
-                var comp = _GridSquares[number[squareIndexToCheck]].GetComponent<GridSquare>();
-
-                if (comp.SquareOccupied)
-                {
-                    shapeCanBePlacedOnTheBoard = false;
-                    break;
-                }
-            }
-
-            if (shapeCanBePlacedOnTheBoard)
-            {
-                canBePlaced = true;
-                break;
-            }
-        }
-        return canBePlaced;
+        
+        return false;
     }
-
 
     private List<int[]> GetAllSquaresCombination(int columns, int rows)
     {
@@ -450,5 +458,16 @@ public class Grid : MonoBehaviour
             return _GridSquares[index];
         }
         return null;
+    }
+
+    private void OnRequestNewShape()
+    {
+        StartCoroutine(CheckPlayerLostAfterDelay());
+    }
+
+    private IEnumerator CheckPlayerLostAfterDelay()
+    {
+        yield return new WaitForSeconds(0.5f);
+        CheckIfPlayerLost();
     }
 }

@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
 public class RequestNewShapesButton : MonoBehaviour, IPointerClickHandler
@@ -25,10 +24,7 @@ public class RequestNewShapesButton : MonoBehaviour, IPointerClickHandler
             Scores.Instance.SpendPoints(cost);
             GameEvents.RequestNewShapeMethod();
         }
-        else
-        {
-            Debug.Log("Yeterli puan yok: " + cost + " puan gerekli.");
-        }
+        
     }
 
     private void UpdateInteractability()

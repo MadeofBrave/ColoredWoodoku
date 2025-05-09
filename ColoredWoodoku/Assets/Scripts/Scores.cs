@@ -35,7 +35,6 @@ public class Scores : MonoBehaviour
     {
         bestScores_ = BinaryDataSystem.Read<BestScoreData>(bestScoreKey_);
         yield return new WaitForEndOfFrame();
-        Debug.Log("Read Best Scores= " + bestScores_.Score);
     }
 
     void Start()

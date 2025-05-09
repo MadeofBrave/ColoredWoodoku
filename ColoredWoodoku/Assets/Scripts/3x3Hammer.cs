@@ -85,6 +85,5 @@ public class Area3x3Hammer : Shape
             }
         }
 
-        Debug.Log("3x3 Alan temizlendi!");
     }
 }

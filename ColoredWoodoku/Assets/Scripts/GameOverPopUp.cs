@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class GameOverPopUp : MonoBehaviour
@@ -26,9 +24,8 @@ public class GameOverPopUp : MonoBehaviour
     private void OnGameOver(bool newBestScore)
     {
         gameOverPopUp.SetActive(true);
-        loosePopUp.SetActive(false);
-        newBestScorePopUp.SetActive(true);
-
+        loosePopUp.SetActive(true);
+        newBestScorePopUp.SetActive(newBestScore);
     }
 
 
