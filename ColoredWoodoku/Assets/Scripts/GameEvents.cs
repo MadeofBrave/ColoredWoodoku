@@ -38,17 +38,6 @@ public static class GameEvents
     {
         LastExplosionColor = color;
         
-        // When explosion color changes, notify server to sync it if we're in a networked game
-        // (This happens on next turn anyway, but this makes it more immediate)
-        if (GameNetworkManager.Instance != null && GameNetworkManager.Instance.IsServer)
-        {
-            // The server already knows the color, just make sure it's synced next update
-        }
-        else if (GameNetworkManager.Instance != null && !GameNetworkManager.Instance.IsServer)
-        {
-            // Client can notify server about color change, but server has final say on synced values
-            // The server will sync back on next turn completion
-        }
     }
 
     public static void CheckIfOneByOneCanBePlacedMethod()

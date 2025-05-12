@@ -15,24 +15,21 @@ public class GameNetworkManager : NetworkBehaviour
 
     private bool isWaitingForOthers = false; 
     
-    // For synchronizing random shapes - using NetworkList instead of arrays
     private NetworkList<int> syncedShapeIndices;
     private NetworkList<int> syncedShapeColors;
-        
-    // For syncing explosion colors
     private NetworkVariable<int> syncedExplosionColor = new NetworkVariable<int>(
         0, 
         NetworkVariableReadPermission.Everyone, 
         NetworkVariableWritePermission.Server);
         
-    // Flag to indicate if shapes have been synchronized
     private NetworkVariable<bool> shapesReadyToUse = new NetworkVariable<bool>(
         false,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
         
-    // Flag to track initial shapes generation
     private bool initialShapesGenerated = false;
+
+    private NetworkVariable<bool> gridStateManagerSpawned = new NetworkVariable<bool>(false);
 
     void Awake()
     {
@@ -46,7 +43,6 @@ public class GameNetworkManager : NetworkBehaviour
             return;
         }
         
-        // Initialize the NetworkLists
         syncedShapeIndices = new NetworkList<int>();
         syncedShapeColors = new NetworkList<int>();
         
@@ -58,7 +54,6 @@ public class GameNetworkManager : NetworkBehaviour
     
     private void Start()
     {
-        // Register for network variable change events
         if (syncedShapeIndices != null)
         {
             syncedShapeIndices.OnListChanged += OnSyncedShapesChanged;
@@ -69,16 +64,14 @@ public class GameNetworkManager : NetworkBehaviour
             shapesReadyToUse.OnValueChanged += OnShapesReadyChanged;
         }
         
-        // Subscribe to client connection event
         if (NetworkManager.Singleton != null)
         {
             NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
         }
     }
-    
+
     private void OnDestroy()
     {
-        // Unregister from network events to prevent memory leaks
         if (syncedShapeIndices != null)
         {
             syncedShapeIndices.OnListChanged -= OnSyncedShapesChanged;
@@ -89,36 +82,25 @@ public class GameNetworkManager : NetworkBehaviour
             shapesReadyToUse.OnValueChanged -= OnShapesReadyChanged;
         }
         
-        // Unsubscribe from client connection event
         if (NetworkManager.Singleton != null)
         {
             NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
         }
     }
     
-    // Event fired when a client connects
     private void OnClientConnected(ulong clientId)
     {
-        Debug.Log($"Client connected: {clientId}");
         
         if (IsServer)
         {
-            // If this is the host and shapes are already generated,
-            // trigger a refresh for the new client
             if (initialShapesGenerated)
             {
-                Debug.Log("Re-syncing shapes for newly connected client");
                 
-                // Reset flag to ensure change is detected
                 shapesReadyToUse.Value = false;
-                
-                // Small delay to ensure network variables are updated
                 StartCoroutine(SyncShapesForNewClient(0.5f));
             }
             else
             {
-                // Shapes aren't generated yet, generate them now
-                Debug.Log("Generating initial shapes for first connected client");
                 GenerateInitialShapes();
             }
         }
@@ -128,40 +110,26 @@ public class GameNetworkManager : NetworkBehaviour
     {
         yield return new WaitForSeconds(delay);
         
-        // Re-sync shapes to ensure they match on all clients
         if (syncedShapeIndices.Count > 0)
         {
-            // Shapes already exist, let's not regenerate
-            // Just set ready flag to true to trigger refresh
             shapesReadyToUse.Value = true;
-            Debug.Log("Re-synced existing shapes to new client");
         }
         else
         {
-            // No shapes exist yet, generate them
             GenerateAndSyncRandomShapes();
             shapesReadyToUse.Value = true;
-            Debug.Log("Generated new shapes for new client");
         }
     }
     
-    // Generate initial shapes once when host starts
     private void GenerateInitialShapes()
     {
         if (!IsServer || initialShapesGenerated) return;
         
-        Debug.Log("Generating initial shapes on host");
-        
-        // First set ready to false to ensure change is detected
         shapesReadyToUse.Value = false;
-        
-        // Generate shapes
         GenerateAndSyncRandomShapes();
         
-        // Mark initial shapes as generated
         initialShapesGenerated = true;
         
-        // Set shapes as ready with small delay
         StartCoroutine(SetShapesReadyAfterDelay(0.5f));
     }
     
@@ -169,15 +137,12 @@ public class GameNetworkManager : NetworkBehaviour
     {
         if (newValue)
         {
-            // Shapes are ready to use, let's get new shapes
-            Debug.Log("Shapes are ready signal received - requesting initial shapes");
             GameEvents.RequestNewShapeMethod();
         }
     }
     
     private void OnSyncedShapesChanged(NetworkListEvent<int> changeEvent)
     {
-        Debug.Log($"SyncedShapes changed: {changeEvent.Type}");
     }
 
     public void StartHost()
@@ -201,8 +166,40 @@ public class GameNetworkManager : NetworkBehaviour
         {
             InitializeServerState();
             
-            // Initial shapes will be generated when clients connect
-            // so we don't need to do it here
+            SpawnGridStateManager();
+        }
+    }
+
+    private void SpawnGridStateManager()
+    {
+        if (!IsServer) return;
+        
+        GridStateManager existingManager = FindObjectOfType<GridStateManager>();
+        
+        if (existingManager == null)
+        {
+            GameObject gridStateObj = new GameObject("GridStateManager");
+            GridStateManager gridStateManager = gridStateObj.AddComponent<GridStateManager>();
+            
+            var networkObject = gridStateObj.AddComponent<NetworkObject>();
+            networkObject.Spawn();
+            
+            gridStateManagerSpawned.Value = true;
+            
+        }
+        else
+        {
+            if (existingManager.gameObject.GetComponent<NetworkObject>() == null)
+            {
+                existingManager.gameObject.AddComponent<NetworkObject>();
+            }
+            
+            var networkObject = existingManager.gameObject.GetComponent<NetworkObject>();
+            if (!networkObject.IsSpawned)
+            {
+                networkObject.Spawn();
+                gridStateManagerSpawned.Value = true;
+            }
         }
     }
 
@@ -217,14 +214,14 @@ public class GameNetworkManager : NetworkBehaviour
         }
         networkUI?.ShowPanel(false);
         
-        Debug.Log("Client started - waiting for shapes from server");
     }
 
     public void LocalPlayerFinishedPlacingShapes()
-    {        
-        isWaitingForOthers = true;
-        ShowWaitingMessageLocally(true); 
-        InitiateNetworkNotification(); 
+    {
+        
+        GridStateManager.Instance?.ShareGridState();
+        
+        InitiateNetworkNotification();
     }
 
     private void InitiateNetworkNotification()
@@ -253,34 +250,76 @@ public class GameNetworkManager : NetworkBehaviour
 
     private void HandlePlayerFinishedOnServer(ulong clientId)
     {
-        if (!IsServer) return; 
-
-        playersFinished[clientId] = true;
-
-        if (NetworkManager.Singleton.ConnectedClientsList.Count >= expectedPlayers && 
-            playersFinished.Count == NetworkManager.Singleton.ConnectedClientsList.Count &&
-            playersFinished.Values.All(finished => finished))
+        if (!playersFinished.ContainsKey(clientId))
         {
-            Debug.Log("All players finished. Generating new shapes on server");
+            playersFinished.Add(clientId, true);
+        }
+        else
+        {
+            playersFinished[clientId] = true;
+        }
+        
+        RequestGridStateSharingClientRpc(new ClientRpcParams
+        {
+            Send = new ClientRpcSendParams
+            {
+                TargetClientIds = new ulong[] { clientId }
+            }
+        });
+        
+        if (playersFinished.Count >= expectedPlayers && playersFinished.Values.All(finished => finished))
+        {
             
-            // Reset the shapes ready flag first to ensure clients know new shapes are coming
-            shapesReadyToUse.Value = false;
-            
-            // Generate and sync random shapes before requesting new shapes
-            GenerateAndSyncRandomShapes();
-            
-            // Also sync the explosion color
-            SyncExplosionColor();
-            
-            // Set flag to indicate shapes are ready
-            // Küçük bir gecikme ekleyelim ki istemciler tüm değişiklikleri algılayabilsin
-            StartCoroutine(SetShapesReadyAfterDelay(0.2f));
-            
-            // Tell all clients that all players have finished
-            AllPlayersFinishedClientRpc();
-            
-            // Reset server state for next round
-            InitializeServerState(); 
+            StartCoroutine(GenerateShapesAfterGridSharing(1.0f));
+        }
+    }
+    
+    private IEnumerator GenerateShapesAfterGridSharing(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        
+        
+        shapesReadyToUse.Value = false;
+        GenerateAndSyncRandomShapes();
+        SyncExplosionColor();
+        StartCoroutine(SetShapesReadyAfterDelay(0.2f));
+        AllPlayersFinishedClientRpc();
+        InitializeServerState(); 
+    }
+    
+    [ClientRpc]
+    private void RequestGridStateSharingClientRpc(ClientRpcParams rpcParams = default)
+    {
+        
+        
+        
+            if (!gridStateManagerSpawned.Value)
+            {
+                StartCoroutine(TryShareGridStateAfterDelay(0.5f));
+                return;
+            }
+
+            GridStateManager gridStateManager = FindObjectOfType<GridStateManager>();
+            if (gridStateManager != null)
+            {
+                gridStateManager.ShareGridState();
+            }
+            else
+            {
+                StartCoroutine(TryShareGridStateAfterDelay(0.5f));
+            }
+        
+       
+    }
+    
+    private System.Collections.IEnumerator TryShareGridStateAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        
+        GridStateManager gridStateManager = FindObjectOfType<GridStateManager>();
+        if (gridStateManager != null)
+        {
+            gridStateManager.ShareGridState();
         }
     }
     
@@ -288,57 +327,44 @@ public class GameNetworkManager : NetworkBehaviour
     {
         yield return new WaitForSeconds(delay);
         shapesReadyToUse.Value = true;
-        Debug.Log("Shapes ready set to TRUE after delay");
     }
     
-    // Generate random shapes on the server and sync them to clients
     private void GenerateAndSyncRandomShapes()
     {
         if (!IsServer) 
         {
-            Debug.LogWarning("Attempted to generate shapes on client. This should only happen on server!");
             return;
         }
         
-        Debug.Log("Server is generating random shapes");
         
         ShapeStorage shapeStorage = ShapeStorage.Instance;
         if (shapeStorage == null) 
         {
-            Debug.LogError("ShapeStorage not found!");
             return;
         }
         
         int shapesCount = shapeStorage.ShapeList.Count;
         
-        // Clear previous data
         syncedShapeIndices.Clear();
         syncedShapeColors.Clear();
         
         for (int i = 0; i < shapesCount; i++)
         {
-            // Generate random shape index
             int shapeIndex = Random.Range(0, shapeStorage.shapeData.Count);
             
-            // Generate random color (0=Blue, 1=Green, 2=Yellow)
             int shapeColor = Random.Range(0, 3);
             
-            Debug.Log($"Server generated shape {i}: Type={shapeIndex}, Color={shapeColor}");
-            
-            // Add to NetworkLists
             syncedShapeIndices.Add(shapeIndex);
             syncedShapeColors.Add(shapeColor);
         }
     }
     
-    // Sync the explosion color for color squares
     private void SyncExplosionColor()
     {
         if (!IsServer) return;
         
-        // Get current explosion color and sync it
         Shape.ShapeColor explosionColor = GameEvents.LastExplosionColor;
-        int colorInt = 0; // Default to Blue
+        int colorInt = 0;
         
         switch (explosionColor)
         {
@@ -362,7 +388,6 @@ public class GameNetworkManager : NetworkBehaviour
         syncedExplosionColor.Value = colorInt;
     }
     
-    // Method for setting the explosion color based on synced value
     public void ApplySyncedExplosionColor()
     {
         if (syncedExplosionColor.Value < 0)
@@ -371,7 +396,7 @@ public class GameNetworkManager : NetworkBehaviour
             return;
         }
         
-        Shape.ShapeColor color = Shape.ShapeColor.Blue; // Default
+        Shape.ShapeColor color = Shape.ShapeColor.Blue;
         
         switch (syncedExplosionColor.Value)
         {
@@ -392,33 +417,26 @@ public class GameNetworkManager : NetworkBehaviour
         GameEvents.SetLastExplosionColorMethod(color);
     }
     
-    // Method for ShapeStorage to get the synced random shape index
     public int GetSyncedShapeIndex(int shapePosition)
     {
         if (syncedShapeIndices == null || syncedShapeIndices.Count <= shapePosition) 
         {
-            Debug.LogWarning($"Requested shape index {shapePosition} but only {(syncedShapeIndices != null ? syncedShapeIndices.Count : 0)} are available");
-            // Return random as fallback if not synced yet
             return Random.Range(0, ShapeStorage.Instance.shapeData.Count);
         }
         
         return syncedShapeIndices[shapePosition];
     }
     
-    // Method for ShapeStorage to get the synced random color
     public Shape.ShapeColor GetSyncedShapeColor(int shapePosition)
     {
         if (syncedShapeColors == null || syncedShapeColors.Count <= shapePosition) 
         {
-            Debug.LogWarning($"Requested shape color {shapePosition} but only {(syncedShapeColors != null ? syncedShapeColors.Count : 0)} are available");
-            // Return random as fallback
             return (Shape.ShapeColor)Random.Range(0, 3);
         }
         
         return (Shape.ShapeColor)syncedShapeColors[shapePosition];
     }
     
-    // Check if shapes are ready to use (for clients)
     public bool AreShapesReadyToUse()
     {
         return shapesReadyToUse.Value;
@@ -427,17 +445,9 @@ public class GameNetworkManager : NetworkBehaviour
     [ClientRpc]
     private void AllPlayersFinishedClientRpc()
     {
-        Debug.Log("Received AllPlayersFinishedClientRpc");
-        
-        // All players have finished, now we can show new shapes
         isWaitingForOthers = false;
-        ShowWaitingMessageLocally(false); 
-        
-        // Apply synced explosion color
+        ShowWaitingMessageLocally(false);
         ApplySyncedExplosionColor();
-        
-        // Şekiller zaten hazır olduğu için ve OnShapesReadyChanged tarafından otomatik tetikleneceği için
-        // burada ayrıca GameEvents.RequestNewShapeMethod() çağırmaya gerek yok
     }
 
     private void ShowWaitingMessageLocally(bool show)
@@ -449,7 +459,6 @@ public class GameNetworkManager : NetworkBehaviour
 
         if (show)
         {
-            waitingText.text = "Shapes placed! Waiting for other player...";
             waitingText.gameObject.SetActive(true);
         }
         else

@@ -6,7 +6,7 @@ public class GameNetworkUI : MonoBehaviour
     public Button hostButton;
     public Button clientButton;
     public Button endServerButton;
-    public GameObject networkPanel; // Bu UI panelinin kendisi
+    public GameObject networkPanel;
 
     void Start()
     {
@@ -25,21 +25,16 @@ public class GameNetworkUI : MonoBehaviour
 
     private void OnHostButtonClicked()
     {
-        Debug.Log("Host Button Clicked!");
         GameNetworkManager.Instance?.StartHost();
-        // Panel gizleme işini GameNetworkManager yapacak
     }
 
     private void OnClientButtonClicked()
     {
-        Debug.Log("Client Button Clicked!");
         GameNetworkManager.Instance?.StartClient();
-        // Panel gizleme işini GameNetworkManager yapacak
     }
 
     private void OnEndServerButtonClicked()
     {
-        Debug.Log("End Server Button Clicked!");
         GameNetworkManager.Instance?.ShutdownServer();
     }
 

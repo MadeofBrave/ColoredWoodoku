@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using static Shape;
+using static GridStateManager;
+using Unity.Netcode;
 
 public class Grid : MonoBehaviour
 {
@@ -21,6 +23,27 @@ public class Grid : MonoBehaviour
     public bool SquareOccupied { get; private set; } = false;
     public Shape.ShapeColor SquareColor { get; private set; } = Shape.ShapeColor.None;
     public static Grid Instance { get; private set; }
+
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else if (Instance != this)
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+       
+    }
 
     public void SetSquareOccupied(bool occupied, Shape.ShapeColor color)
     {
@@ -165,15 +188,15 @@ public class Grid : MonoBehaviour
 
         if (!anyShapeLeft)
         {
+            SendGridStateToServer();
             if (GameNetworkManager.Instance != null)
             {
-                 GameNetworkManager.Instance.LocalPlayerFinishedPlacingShapes();
+                GameNetworkManager.Instance.LocalPlayerFinishedPlacingShapes();
             }
             else
             {
-                GameEvents.RequestNewShapeMethod(); 
+                GameEvents.RequestNewShapeMethod();
             }
-           
         }
         else
         {
@@ -183,6 +206,11 @@ public class Grid : MonoBehaviour
         CheckIfAnyLineIsCompleted();
         
         StartCoroutine(CheckPlayerLostAfterDelay());
+        
+        if (GridStateManager.Instance != null)
+        {
+            GridStateManager.Instance.ShareGridState();
+        }
     }
     
     private void PlaceShapeOnGrid(Shape shape, List<int> squareIndexes, ShapeColor color)
@@ -469,5 +497,28 @@ public class Grid : MonoBehaviour
     {
         yield return new WaitForSeconds(0.5f);
         CheckIfPlayerLost();
+    }
+
+    private void SendGridStateToServer()
+    {
+        List<GridSquareState> gridState = new List<GridSquareState>();
+        foreach (var square in _GridSquares)
+        {
+            var gridSquare = square.GetComponent<GridSquare>();
+            if (gridSquare.isOccupied)
+            {
+                gridState.Add(new GridSquareState
+                {
+                    index = gridSquare.SquareIndex,
+                    isOccupied = true,
+                    colorIndex = (int)gridSquare.squareColor
+                });
+            }
+        }
+        GridStateManager.Instance.SendGridStateToServerRpc(
+            gridState.Select(s => s.index).ToArray(),
+            gridState.Select(s => s.isOccupied).ToArray(),
+            gridState.Select(s => s.colorIndex).ToArray()
+        );
     }
 }

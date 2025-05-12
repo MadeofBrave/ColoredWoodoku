@@ -18,7 +18,8 @@ public class GridSquare : MonoBehaviour
 
     public bool Selected { get; set; }
     public int SquareIndex { get; set; }
-    public bool SquareOccupied { get; set; }
+    public bool SquareOccupied { get; private set; } = false;
+    public Shape.ShapeColor OccupiedColor { get; private set; } = Shape.ShapeColor.None;
 
 
     public void StartColorCycle()
@@ -39,17 +40,29 @@ public class GridSquare : MonoBehaviour
         }
     }
 
-    public void PlaceShapeOnBoard(Shape.ShapeColor color, bool isJoker)
+    public bool PlaceShapeOnBoard(Shape.ShapeColor color, bool isJoker = false)
     {
+        if (!CanWeUseTheSquare())
+            return false;
+            
         isOccupied = true;
         squareColor = color;
         SetColor(color);
-
+        
+        SquareOccupied = true;
+        OccupiedColor = color;
+        
+        if (hooverImage != null)
+            hooverImage.gameObject.SetActive(false);
+        
         if (isJoker) 
         {
             StartColorCycle();
         }
+        
+        return true;
     }
+
     public void StopColorCycle()
     {
         if (colorChangeCoroutine != null)
@@ -64,6 +77,7 @@ public class GridSquare : MonoBehaviour
         SetRandomInitialColor();
         Selected = false;
         SquareOccupied = false;
+        OccupiedColor = Shape.ShapeColor.None;
     }
 
     private void SetRandomInitialColor()
@@ -74,9 +88,12 @@ public class GridSquare : MonoBehaviour
 
     public void PlaceShapeOnBoard(Shape.ShapeColor color)
     {
-        isOccupied = true;
-        squareColor = color;
-        SetColor(color);
+        PlaceShapeOnBoard(color, false);
+    }
+
+    private bool IsCost(Shape.ShapeColor color, bool isJoker)
+    {
+        return !isOccupied;
     }
 
     public void ClearSquareWithHammer()
@@ -92,12 +109,11 @@ public class GridSquare : MonoBehaviour
             }
 
             SquareOccupied = false;
+            OccupiedColor = Shape.ShapeColor.None;
             Selected = false;
             StopColorCycle();
         }
     }
-
-
 
     public void SetColor(Shape.ShapeColor color)
     {
@@ -106,7 +122,6 @@ public class GridSquare : MonoBehaviour
         {
             normalImage.sprite = colorSprites[index];
         }
-        
     }
 
     public void ActivateSquare()
@@ -131,6 +146,7 @@ public class GridSquare : MonoBehaviour
     {
         Selected = false;
         SquareOccupied = false;
+        OccupiedColor = Shape.ShapeColor.None;
         isOccupied = false;
         squareColor = default;
         if (normalImages != null && normalImages.Count > 0)
