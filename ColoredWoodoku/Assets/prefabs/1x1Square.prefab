@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 3434955806195402924}
   - component: {fileID: 6886250494044127060}
   - component: {fileID: 1681226423683900648}
+  - component: {fileID: -8956285352449772786}
   m_Layer: 5
   m_Name: 1x1Square
   m_TagString: Untagged
@@ -92,8 +93,24 @@ MonoBehaviour:
   shapeSelectedScale: {x: 0, y: 0}
   offset: {x: 0, y: 700}
   CurrentShapeData: {fileID: 11400000, guid: 6c29f915232ff22459456ce54eff0f79, type: 2}
+  currentDropArea: {fileID: 0}
+  isInDropArea: 0
   shapeColor: 0
   blueSprite: {fileID: 21300000, guid: 0b86fa557b0915a45881a65ae36e4ce4, type: 3}
   greenSprite: {fileID: 21300000, guid: 7ee4b69e4d746544287a82af15337c5e, type: 3}
   yellowSprite: {fileID: 21300000, guid: 5623115d78d239a40b2ccec1d698713e, type: 3}
+  _startPosition: {x: 0, y: 0, z: 0}
+  _shapeactive: 1
   shapeStorage: {fileID: 0}
+--- !u!114 &-8956285352449772786
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7270999933562138071}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7bb55ceff37828447886758e1446281e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

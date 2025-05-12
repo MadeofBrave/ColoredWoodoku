@@ -188,9 +188,9 @@ public class Grid : MonoBehaviour
 
         if (!anyShapeLeft)
         {
-            SendGridStateToServer();
             if (GameNetworkManager.Instance != null)
             {
+                SendGridStateToServer();
                 GameNetworkManager.Instance.LocalPlayerFinishedPlacingShapes();
             }
             else
@@ -369,78 +369,71 @@ public class Grid : MonoBehaviour
 
     private void CheckIfPlayerLost()
     {
-        var validShapes = 0;
-        var totalActiveShapes = 0;
+        var activeShapes = shapeStorage.ShapeList.Where(shape => 
+            shape.gameObject.activeSelf && 
+            !shape.isInDropArea && 
+            shape.IsAnyOfShapeSquareActive()).ToList();
+        if (activeShapes.Count == 0) return;
 
-        foreach (var shape in shapeStorage.ShapeList)
+        foreach (var shape in activeShapes)
         {
-            if (shape.isInDropArea || !shape.gameObject.activeSelf || !shape.IsAnyOfShapeSquareActive())
-            {
-                continue;
-            }
+            var shapeData = shape.CurrentShapeData;
+            if (shapeData == null) continue;
 
-            totalActiveShapes++;
-            
-            if (CheckIfShapeCanBePlacedOnGrid(shape))
-            {
-                validShapes++;
-            }
-        }
+            bool canPlaceThisShape = false;
 
-        if (totalActiveShapes > 0 && validShapes == 0)
-        {
-            GameEvents.GameOverMethod(false);
+            for (int i = 0; i < _GridSquares.Count; i++)
+            {
+                var square = _GridSquares[i].GetComponent<GridSquare>();
+                if (square.SquareOccupied) continue;
+
+                int row = i / 9;
+                int col = i % 9;
+
+                if (CanPlaceShapeAt(shapeData, row, col))
+                {
+                    canPlaceThisShape = true;
+                    break;
+                }
+            }
+            if (!canPlaceThisShape)
+            {
+                GameEvents.GameOverMethod(false);
+                return;
+            }
         }
     }
 
-    private bool CheckIfShapeCanBePlacedOnGrid(Shape currentShape)
+    private bool CanPlaceShapeAt(Shapedata shapeData, int startRow, int startCol)
     {
-        var currentShapeData = currentShape.CurrentShapeData;
-        if (currentShapeData == null)
+        int shapeRows = shapeData.rows;
+        int shapeCols = shapeData.columns;
+
+        if (startRow + shapeRows > 9 || startCol + shapeCols > 9)
         {
             return false;
         }
-            
-        var shapeColumns = currentShapeData.columns;
-        var shapeRows = currentShapeData.rows;
 
-        for (int row = 0; row <= 9 - shapeRows; row++)
+        for (int r = 0; r < shapeRows; r++)
         {
-            for (int col = 0; col <= 9 - shapeColumns; col++)
+            for (int c = 0; c < shapeCols; c++)
             {
-                bool canPlaceHere = true;
-
-                for (int shapeRow = 0; shapeRow < shapeRows && canPlaceHere; shapeRow++)
+                if (shapeData.board[r].column[c])
                 {
-                    for (int shapeCol = 0; shapeCol < shapeColumns && canPlaceHere; shapeCol++)
+                    int gridRow = startRow + r;
+                    int gridCol = startCol + c;
+                    int gridIndex = gridRow * 9 + gridCol;
+
+                    if (gridIndex >= _GridSquares.Count || 
+                        _GridSquares[gridIndex].GetComponent<GridSquare>().SquareOccupied)
                     {
-                        if (currentShapeData.board[shapeRow].column[shapeCol])
-                        {
-                            int gridIndex = (row + shapeRow) * 9 + (col + shapeCol);
-                            
-                            if (gridIndex < 0 || gridIndex >= _GridSquares.Count)
-                            {
-                                canPlaceHere = false;
-                                continue;
-                            }
-
-                            var gridSquare = _GridSquares[gridIndex].GetComponent<GridSquare>();
-                            if (gridSquare.SquareOccupied)
-                            {
-                                canPlaceHere = false;
-                            }
-                        }
+                        return false;
                     }
-                }
-
-                if (canPlaceHere)
-                {
-                    return true;
                 }
             }
         }
-        
-        return false;
+
+        return true;
     }
 
     private List<int[]> GetAllSquaresCombination(int columns, int rows)
@@ -496,12 +489,18 @@ public class Grid : MonoBehaviour
 
     private IEnumerator CheckPlayerLostAfterDelay()
     {
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(0.2f); // 0.5 yerine 0.2 saniye yaptım, daha hızlı tepki için
         CheckIfPlayerLost();
     }
 
     private void SendGridStateToServer()
     {
+        // Offline modda veya GridStateManager yoksa işlemi atla
+        if (GridStateManager.Instance == null || GameNetworkManager.Instance == null)
+        {
+            return;
+        }
+
         List<GridSquareState> gridState = new List<GridSquareState>();
         foreach (var square in _GridSquares)
         {
