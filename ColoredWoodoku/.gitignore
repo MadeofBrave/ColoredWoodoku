@@ -10,6 +10,23 @@
 /[Ll]ogs/
 /[Uu]ser[Ss]ettings/
 
+# Unity generated
+*.asset
+ProjectSettings/BurstAotSettings_*.json
+ProjectSettings/EditorBuildSettings.asset
+ProjectSettings/ProjectSettings.asset
+Packages/manifest.json
+Packages/packages-lock.json
+
+# Specific files to ignore
+/Assets/TextMesh Pro/Examples & Extras/Resources/Fonts & Materials/Bangers SDF.asset
+/Assets/prefabs/1x1Square.prefab
+/Assets/Scenes/Online.unity
+/Assets/Scripts/Grid.cs
+
+# Scene files (optional, eğer sahneleri takip etmek istemiyorsanız)
+# *.unity
+
 # MemoryCaptures can get excessive in size.
 # They also could contain extremely sensitive data
 /[Mm]emoryCaptures/
