@@ -323,6 +323,12 @@ public class Grid : MonoBehaviour
         {
             GameEvents.AddScoresMethod(10);
             GameEvents.TriggerOneByOneBlockExplosionMethod(GameEvents.LastExplosionColor);
+            
+            SendGridStateToServer();
+            if (GameNetworkManager.Instance != null)
+            {
+                GameNetworkManager.Instance.LocalPlayerFinishedPlacingShapes();
+            }
         }
 
         return linesCompleted;

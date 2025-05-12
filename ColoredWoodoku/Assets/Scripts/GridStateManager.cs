@@ -3,6 +3,7 @@ using System.Linq;
 using UnityEngine;
 using Unity.Netcode;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public class GridStateManager : NetworkBehaviour
 {
@@ -31,6 +32,11 @@ public class GridStateManager : NetworkBehaviour
     public GameObject gridSquarePrefab;
     private List<GameObject> visualGridSquares = new List<GameObject>();
     
+    public Sprite blueSprite;
+    public Sprite greenSprite;
+    public Sprite yellowSprite;
+    private Sprite jokerSprite;
+    
     private void Awake()
     {
         gameObject.SetActive(true);
@@ -42,6 +48,14 @@ public class GridStateManager : NetworkBehaviour
             
             localGridState = new List<GridSquareState>();
             remoteGridState = new List<GridSquareState>();
+            
+            Shape shapePrefab = Resources.Load<Shape>("Prefabs/Shape");
+            if (shapePrefab != null)
+            {
+                blueSprite = shapePrefab.blueSprite;
+                greenSprite = shapePrefab.greenSprite;
+                yellowSprite = shapePrefab.yellowSprite;
+            }
         }
         else if (Instance != this)
         {
@@ -51,14 +65,18 @@ public class GridStateManager : NetworkBehaviour
     
     private void OnEnable()
     {
-        if (Grid.Instance != null)
-        {
-            FindAndAssignGridReference();
-        }
+        FindAndAssignGridReference();
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
     
     private void OnDisable()
     {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+    
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        FindAndAssignGridReference();
     }
     
     public override void OnNetworkSpawn()
@@ -190,8 +208,6 @@ public class GridStateManager : NetworkBehaviour
                 opponentsBoardPanel.SetActive(true);
             }
         }
-        
-        InvokeRepeating("FindAndAssignGridReference", 2f, 5f);
     }
     
     private void FindAndAssignGridReference()
@@ -228,10 +244,6 @@ public class GridStateManager : NetworkBehaviour
         }
         
         localGridState.Clear();
-
-        if (gridReference._GridSquares.Count == 0 && Application.isPlaying)
-        {
-        }
 
         for (int i = 0; i < gridReference._GridSquares.Count; i++)
         {
@@ -375,17 +387,6 @@ public class GridStateManager : NetworkBehaviour
         {
             opponentsBoardPanel.SetActive(true);
             
-            int doluKareSayisi = 0;
-            foreach (var state in remoteGridState)
-            {
-                if (state.isOccupied && state.colorIndex >= 0)
-                {
-                    doluKareSayisi++;
-                    int satir = state.index / 9;
-                    int sutun = state.index % 9;
-                }
-            }
-            
             FindOrCreateGridVisualizer();
             
             if (gridVisualizer != null)
@@ -471,23 +472,31 @@ public class GridStateManager : NetworkBehaviour
                 
                 if (squareState.HasValue && squareState.Value.isOccupied)
                 {
+                    Sprite selectedSprite = null;
                     switch (squareState.Value.colorIndex)
                     {
-                        case 0: 
-                            squareImage.color = new Color(0.2f, 0.4f, 1f, 1f);
+                        case 0:
+                            selectedSprite = blueSprite;
                             break;
                         case 1:
-                            squareImage.color = new Color(0.2f, 1f, 0.2f, 1f);
+                            selectedSprite = greenSprite;
                             break;
-                        case 2: 
-                            squareImage.color = new Color(1f, 1f, 0.2f, 1f);
+                        case 2:
+                            selectedSprite = yellowSprite;
                             break;
-                        case 3: 
-                            squareImage.color = new Color(1f, 0.2f, 1f, 1f);
+                        case 3:
+                            selectedSprite = jokerSprite;
                             break;
-                        default:
-                            squareImage.color = new Color(0.8f, 0.8f, 0.8f, 0.7f);
-                            break;
+                    }
+                    
+                    if (selectedSprite != null)
+                    {
+                        squareImage.sprite = selectedSprite;
+                        squareImage.color = Color.white;
+                    }
+                    else
+                    {
+                        squareImage.color = new Color(0.8f, 0.8f, 0.8f, 0.7f);
                     }
                 }
                 else
@@ -507,14 +516,6 @@ public class GridStateManager : NetworkBehaviour
         visualGridSquares.Clear();
     }
     
-    private System.Collections.IEnumerator HidePanelAfterDelay(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-        if (opponentsBoardText != null)
-        {
-            opponentsBoardText.text = "Rakip tahtası";
-        }
-    }
 
     public void LocalPlayerFinishedPlacingShapes()
     {
