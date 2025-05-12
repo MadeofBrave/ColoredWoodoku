@@ -52,6 +52,12 @@ public class OpponentGridVisualizer : MonoBehaviour
             if (squareImage != null)
             {
                 squareImage.color = new Color(0.8f, 0.8f, 0.8f, 0.2f);
+                squareImage.raycastTarget = false;
+            }
+            
+            if (gridSquare != null)
+            {
+                gridSquare.DisableInteraction();
             }
         }
         

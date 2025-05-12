@@ -206,11 +206,6 @@ public class Grid : MonoBehaviour
         CheckIfAnyLineIsCompleted();
         
         StartCoroutine(CheckPlayerLostAfterDelay());
-        
-        if (GridStateManager.Instance != null)
-        {
-            GridStateManager.Instance.ShareGridState();
-        }
     }
     
     private void PlaceShapeOnGrid(Shape shape, List<int> squareIndexes, ShapeColor color)

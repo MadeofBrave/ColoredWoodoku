@@ -12,6 +12,7 @@ public class GameNetworkManager : NetworkBehaviour
 
     private Dictionary<ulong, bool> playersFinished = new Dictionary<ulong, bool>();
     private int expectedPlayers = 2;
+    private Dictionary<ulong, bool> gridStatesReceived = new Dictionary<ulong, bool>();
 
     private bool isWaitingForOthers = false; 
     
@@ -140,7 +141,7 @@ public class GameNetworkManager : NetworkBehaviour
             GameEvents.RequestNewShapeMethod();
         }
     }
-    
+
     private void OnSyncedShapesChanged(NetworkListEvent<int> changeEvent)
     {
     }
@@ -218,9 +219,7 @@ public class GameNetworkManager : NetworkBehaviour
 
     public void LocalPlayerFinishedPlacingShapes()
     {
-        
-        GridStateManager.Instance?.ShareGridState();
-        
+        ShowWaitingMessageLocally(true);
         InitiateNetworkNotification();
     }
 
@@ -243,11 +242,6 @@ public class GameNetworkManager : NetworkBehaviour
         HandlePlayerFinishedOnServer(clientIdWhoFinished);
     }
 
-    private void InitializeServerState()
-    {
-         playersFinished.Clear();
-    }
-
     private void HandlePlayerFinishedOnServer(ulong clientId)
     {
         if (!playersFinished.ContainsKey(clientId))
@@ -259,7 +253,7 @@ public class GameNetworkManager : NetworkBehaviour
             playersFinished[clientId] = true;
         }
         
-        RequestGridStateSharingClientRpc(new ClientRpcParams
+        ShowWaitingMessageClientRpc(new ClientRpcParams
         {
             Send = new ClientRpcSendParams
             {
@@ -269,15 +263,45 @@ public class GameNetworkManager : NetworkBehaviour
         
         if (playersFinished.Count >= expectedPlayers && playersFinished.Values.All(finished => finished))
         {
+            foreach (var playerId in playersFinished.Keys)
+            {
+                UpdateOpponentGridClientRpc(new ClientRpcParams
+                {
+                    Send = new ClientRpcSendParams
+                    {
+                        TargetClientIds = new ulong[] { playerId }
+                    }
+                });
+            }
             
-            StartCoroutine(GenerateShapesAfterGridSharing(1.0f));
+            StartCoroutine(GenerateShapesAfterDelay(2.0f));
         }
     }
-    
-    private IEnumerator GenerateShapesAfterGridSharing(float delay)
+
+    private void InitializeServerState()
+    {
+        playersFinished.Clear();
+        gridStatesReceived.Clear();
+    }
+
+    [ClientRpc]
+    private void ShowWaitingMessageClientRpc(ClientRpcParams rpcParams = default)
+    {
+        ShowWaitingMessageLocally(true);
+    }
+
+    [ClientRpc]
+    private void UpdateOpponentGridClientRpc(ClientRpcParams rpcParams = default)
+    {
+        if (GridStateManager.Instance != null)
+        {
+            GridStateManager.Instance.DisplayOpponentBoard();
+        }
+    }
+
+    private IEnumerator GenerateShapesAfterDelay(float delay)
     {
         yield return new WaitForSeconds(delay);
-        
         
         shapesReadyToUse.Value = false;
         GenerateAndSyncRandomShapes();

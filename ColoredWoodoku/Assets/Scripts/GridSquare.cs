@@ -169,6 +169,32 @@ public class GridSquare : MonoBehaviour
         }
     }
 
+    public void DisableInteraction()
+    {
+        if (hooverImage != null)
+        {
+            hooverImage.gameObject.SetActive(false);
+            Destroy(hooverImage.gameObject);
+            hooverImage = null;
+        }
+        
+        if (activeImage != null)
+        {
+            activeImage.gameObject.SetActive(false);
+            Destroy(activeImage.gameObject);
+            activeImage = null;
+        }
+        
+        Collider2D collider = GetComponent<Collider2D>();
+        if (collider != null)
+        {
+            collider.enabled = false;
+        }
+        
+        isOccupied = true;
+        Selected = false;
+    }
+
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (!SquareOccupied)

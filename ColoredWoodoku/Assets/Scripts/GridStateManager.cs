@@ -267,8 +267,9 @@ public class GridStateManager : NetworkBehaviour
     public void SendGridStateToServerRpc(int[] squareIndices, bool[] occupiedStates, int[] colorIndices, ServerRpcParams rpcParams = default)
     {
         ulong senderId = rpcParams.Receive.SenderClientId;
-        ulong receiverId = senderId == 0 ? 1ul : 0ul; 
-        ReceiveGridStateClientRpc(squareIndices, occupiedStates, colorIndices, new ClientRpcParams
+        ulong receiverId = senderId == 0 ? 1ul : 0ul;
+        
+        StoreGridStateClientRpc(squareIndices, occupiedStates, colorIndices, new ClientRpcParams
         {
             Send = new ClientRpcSendParams
             {
@@ -278,16 +279,12 @@ public class GridStateManager : NetworkBehaviour
     }
     
     [ClientRpc]
-    public void ReceiveGridStateClientRpc(int[] squareIndices, bool[] occupiedStates, int[] colorIndices, ClientRpcParams clientRpcParams = default)
+    public void StoreGridStateClientRpc(int[] squareIndices, bool[] occupiedStates, int[] colorIndices, ClientRpcParams clientRpcParams = default)
     {
         remoteGridState.Clear();
         
-        int doluKareSayisi = 0;
-        
         for (int i = 0; i < squareIndices.Length; i++)
         {
-            bool isDolu = occupiedStates[i] && colorIndices[i] >= 0;
-            
             GridSquareState squareState = new GridSquareState
             {
                 index = squareIndices[i],
@@ -295,22 +292,16 @@ public class GridStateManager : NetworkBehaviour
                 colorIndex = colorIndices[i]
             };
             
-            if (isDolu)
-            {
-                doluKareSayisi++;
-                int row = squareIndices[i] / 9;
-                int col = squareIndices[i] % 9;
-            }
-            
             remoteGridState.Add(squareState);
         }
-        
-        DisplayComparisonPanel();
     }
     
     public void DisplayOpponentBoard()
     {
-        DisplayComparisonPanel();
+        if (remoteGridState.Count > 0)
+        {
+            DisplayComparisonPanel();
+        }
     }
     
     public void ShareGridState()
@@ -332,9 +323,7 @@ public class GridStateManager : NetworkBehaviour
             int occupiedCount = localGridState.Count(s => s.isOccupied);
             if (occupiedCount == 0)
             {
-                if (gridReference != null && gridReference._GridSquares.Count > 0)
-                {
-                }
+                return;
             }
             
             int[] squareIndices = new int[localGridState.Count];
@@ -352,6 +341,7 @@ public class GridStateManager : NetworkBehaviour
         }
         catch (System.Exception e)
         {
+            Debug.LogError($"Error in ShareGridState: {e.Message}");
         }
     }
     
