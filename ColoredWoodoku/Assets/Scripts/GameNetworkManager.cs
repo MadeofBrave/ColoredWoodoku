@@ -4,11 +4,17 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using System.Collections;
+using UnityEngine.SceneManagement;
 
 public class GameNetworkManager : NetworkBehaviour
 {
     public static GameNetworkManager Instance { get; private set; }
     public TextMeshProUGUI waitingText;
+    public TextMeshProUGUI winnerText;
+    public TextMeshProUGUI timeoutMessageText;
+    
+    private NetworkVariable<bool> gameEndedDueToTimeout = new NetworkVariable<bool>(false);
+    private NetworkVariable<ulong> timeoutLoserId = new NetworkVariable<ulong>(999);
 
     private Dictionary<ulong, bool> playersFinished = new Dictionary<ulong, bool>();
     private int expectedPlayers = 2;
@@ -69,6 +75,9 @@ public class GameNetworkManager : NetworkBehaviour
         {
             NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
         }
+        
+        gameEndedDueToTimeout.OnValueChanged += OnGameEndedDueToTimeoutChanged;
+        timeoutLoserId.OnValueChanged += OnTimeoutLoserIdChanged;
     }
 
     private void OnDestroy()
@@ -87,16 +96,160 @@ public class GameNetworkManager : NetworkBehaviour
         {
             NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
         }
+        
+        gameEndedDueToTimeout.OnValueChanged -= OnGameEndedDueToTimeoutChanged;
+        timeoutLoserId.OnValueChanged -= OnTimeoutLoserIdChanged;
+    }
+    
+    private void OnGameEndedDueToTimeoutChanged(bool previousValue, bool newValue)
+    {
+        if (newValue)
+        {
+            HandleGameEndDueToTimeout();
+        }
+    }
+    
+    private void OnTimeoutLoserIdChanged(ulong previousValue, ulong newValue)
+    {
+        // This gets called when the loser ID is set
+        if (gameEndedDueToTimeout.Value && newValue != 999)
+        {
+            bool isLocalPlayerLoser = newValue == NetworkManager.Singleton.LocalClientId;
+            ShowTimeoutMessage(isLocalPlayerLoser);
+        }
+    }
+    
+    private void HandleGameEndDueToTimeout()
+    {
+        // Stop the timer
+        TurnTimer.Instance?.PauseTurn();
+        
+        // Ensure grid interactions are disabled
+        GridStateManager.Instance?.CollectLocalGridState();
+        GridStateManager.Instance?.DisplayOpponentBoard();
+    }
+    
+    private void ShowTimeoutMessage(bool isLocalPlayerLoser)
+    {
+        // Timer nesnesini bul ve gizle
+        GameObject timerObject = GameObject.Find("Timer");
+        if (timerObject != null)
+        {
+            timerObject.SetActive(false);
+        }
+        
+        if (timeoutMessageText != null)
+        {
+            timeoutMessageText.gameObject.SetActive(true);
+            
+            if (isLocalPlayerLoser)
+            {
+                timeoutMessageText.text = "LOSE";
+            }
+            else
+            {
+                timeoutMessageText.text = "WIN";
+            }
+        }
+        
+        // Oyun sonlandığı için grid etkileşimlerini devre dışı bırak
+        DisableAllGridInteractions();
+        
+        // 5 saniye sonra oyunu yeniden başlat
+        StartCoroutine(RestartGameAfterDelay(5.0f));
+    }
+    
+    private IEnumerator RestartGameAfterDelay(float delaySeconds)
+    {
+        // Belirtilen süre kadar bekle
+        yield return new WaitForSeconds(delaySeconds);
+        
+        // Oyunu yeniden başlat - mevcut sahneyi tekrar yükle
+        string currentSceneName = SceneManager.GetActiveScene().name;
+        
+        // Eğer sunucu ise, tüm clientlere yeniden başlatma bildirimi gönder
+        if (IsServer)
+        {
+            RestartGameClientRpc();
+        }
+        
+        // Unity'nin NetworkManager'ını kapat (sonraki sahnede yeniden bağlanabilmek için)
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.Shutdown();
+        }
+        
+        // Sahneyi yeniden yükle
+        SceneManager.LoadScene(currentSceneName);
+    }
+    
+    [ClientRpc]
+    private void RestartGameClientRpc()
+    {
+        // Bu client'da NetworkManager'ı kapat ve sahneyi yeniden yükle
+        if (!IsServer) // Server zaten RestartGameAfterDelay içinde işlem yapıyor
+        {
+            StartCoroutine(RestartGameAfterDelay(0.1f)); // Hemen yeniden başlat
+        }
+    }
+    
+    // Oyun bittiğinde tüm grid etkileşimlerini devre dışı bırak
+    private void DisableAllGridInteractions()
+    {
+        Grid grid = Grid.Instance;
+        if (grid != null)
+        {
+            foreach (var square in grid._GridSquares)
+            {
+                if (square != null)
+                {
+                    GridSquare gridSquare = square.GetComponent<GridSquare>();
+                    if (gridSquare != null)
+                    {
+                        gridSquare.enabled = false;
+                    }
+                }
+            }
+        }
+        
+        // Şekilleri de devre dışı bırak
+        ShapeStorage shapeStorage = ShapeStorage.Instance;
+        if (shapeStorage != null)
+        {
+            foreach (var shape in shapeStorage.ShapeList)
+            {
+                if (shape != null)
+                {
+                    shape.enabled = false;
+                }
+            }
+        }
+    }
+    
+    [ServerRpc(RequireOwnership = false)]
+    public void PlayerTimeoutServerRpc(ulong timeoutPlayerId, ServerRpcParams rpcParams = default)
+    {
+        ulong loserId = rpcParams.Receive.SenderClientId;
+        
+        gameEndedDueToTimeout.Value = true;
+        timeoutLoserId.Value = loserId;
+        
+        PlayerTimeoutClientRpc(loserId);
+    }
+    
+    [ClientRpc]
+    private void PlayerTimeoutClientRpc(ulong loserId)
+    {
+        bool isLocalPlayerLoser = loserId == NetworkManager.Singleton.LocalClientId;
+        ShowTimeoutMessage(isLocalPlayerLoser);
     }
     
     private void OnClientConnected(ulong clientId)
     {
-        
         if (IsServer)
         {
             if (initialShapesGenerated)
             {
-                
                 shapesReadyToUse.Value = false;
                 StartCoroutine(SyncShapesForNewClient(0.5f));
             }
@@ -168,6 +321,19 @@ public class GameNetworkManager : NetworkBehaviour
             InitializeServerState();
             
             SpawnGridStateManager();
+            
+            StartCoroutine(StartInitialTimerAfterDelay(1.0f));
+        }
+    }
+    
+    private IEnumerator StartInitialTimerAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        
+        TurnTimer turnTimer = FindObjectOfType<TurnTimer>();
+        if (turnTimer != null)
+        {
+            turnTimer.StartTurn();
         }
     }
 
@@ -200,6 +366,28 @@ public class GameNetworkManager : NetworkBehaviour
             {
                 networkObject.Spawn();
                 gridStateManagerSpawned.Value = true;
+            }
+        }
+        
+        TurnTimer existingTimer = FindObjectOfType<TurnTimer>();
+        if (existingTimer == null)
+        {
+            GameObject timerObj = new GameObject("TurnTimer");
+            TurnTimer turnTimer = timerObj.AddComponent<TurnTimer>();
+            var networkObject = timerObj.AddComponent<NetworkObject>();
+            networkObject.Spawn();
+        }
+        else
+        {
+            if (existingTimer.gameObject.GetComponent<NetworkObject>() == null)
+            {
+                existingTimer.gameObject.AddComponent<NetworkObject>();
+            }
+            
+            var networkObject = existingTimer.gameObject.GetComponent<NetworkObject>();
+            if (!networkObject.IsSpawned)
+            {
+                networkObject.Spawn();
             }
         }
     }
@@ -263,18 +451,7 @@ public class GameNetworkManager : NetworkBehaviour
         
         if (playersFinished.Count >= expectedPlayers && playersFinished.Values.All(finished => finished))
         {
-            foreach (var playerId in playersFinished.Keys)
-            {
-                UpdateOpponentGridClientRpc(new ClientRpcParams
-                {
-                    Send = new ClientRpcSendParams
-                    {
-                        TargetClientIds = new ulong[] { playerId }
-                    }
-                });
-            }
-            
-            StartCoroutine(GenerateShapesAfterDelay(2.0f));
+            StartCoroutine(GenerateShapesAfterDelay(0.5f));
         }
     }
 
@@ -290,18 +467,17 @@ public class GameNetworkManager : NetworkBehaviour
         ShowWaitingMessageLocally(true);
     }
 
-    [ClientRpc]
-    private void UpdateOpponentGridClientRpc(ClientRpcParams rpcParams = default)
-    {
-        if (GridStateManager.Instance != null)
-        {
-            GridStateManager.Instance.DisplayOpponentBoard();
-        }
-    }
+
 
     private IEnumerator GenerateShapesAfterDelay(float delay)
     {
         yield return new WaitForSeconds(delay);
+        
+        UpdateAllPlayersGridsClientRpc();
+        
+        yield return new WaitForSeconds(2.0f);
+        
+        ClearAllGridsClientRpc();
         
         shapesReadyToUse.Value = false;
         GenerateAndSyncRandomShapes();
@@ -309,6 +485,36 @@ public class GameNetworkManager : NetworkBehaviour
         StartCoroutine(SetShapesReadyAfterDelay(0.2f));
         AllPlayersFinishedClientRpc();
         InitializeServerState(); 
+    }
+    
+    [ClientRpc]
+    private void UpdateAllPlayersGridsClientRpc()
+    {
+        if (GridStateManager.Instance != null)
+        {
+            // Önce opponent board panelinin aktif olduğundan emin ol
+            if (GridStateManager.Instance.opponentsBoardPanel != null)
+            {
+                GridStateManager.Instance.opponentsBoardPanel.SetActive(true);
+            }
+            
+            // Rakip oyuncunun tahtasını görselleştir
+            GridStateManager.Instance.DisplayOpponentBoard();
+        }
+    }
+    
+    [ClientRpc]
+    private void ClearAllGridsClientRpc()
+    {
+        // Ana grid'i DEĞİL, rakibin mini grid'ini beyaza ayarla
+        if (GridStateManager.Instance != null && GridStateManager.Instance.opponentsBoardPanel != null)
+        {
+            OpponentGridVisualizer visualizer = GridStateManager.Instance.opponentsBoardPanel.GetComponentInChildren<OpponentGridVisualizer>();
+            if (visualizer != null)
+            {
+                visualizer.ResetVisualGridToWhite();
+            }
+        }
     }
     
     [ClientRpc]
@@ -472,6 +678,30 @@ public class GameNetworkManager : NetworkBehaviour
         isWaitingForOthers = false;
         ShowWaitingMessageLocally(false);
         ApplySyncedExplosionColor();
+        
+        if (TurnTimer.Instance != null)
+        {
+            TurnTimer.Instance.PauseTurn();
+            
+            TurnTimer.Instance.StartTurn();
+        }
+        else
+        {
+            TurnTimer existingTimer = FindObjectOfType<TurnTimer>();
+            if (existingTimer == null && IsServer)
+            {
+                GameObject timerObj = new GameObject("TurnTimer");
+                TurnTimer turnTimer = timerObj.AddComponent<TurnTimer>();
+                NetworkObject networkObj = timerObj.AddComponent<NetworkObject>();
+                networkObj.Spawn();
+                turnTimer.StartTurn();
+            }
+            else if (existingTimer != null)
+            {
+                existingTimer.PauseTurn();
+                existingTimer.StartTurn();
+            }
+        }
     }
 
     private void ShowWaitingMessageLocally(bool show)
@@ -506,6 +736,39 @@ public class GameNetworkManager : NetworkBehaviour
                 return;
             }
             networkUI?.ShowPanel(true); 
+        }
+    }
+
+
+    public void CheckAndHandleUnfinishedPlayersOnTimeout()
+    {
+        if (!IsServer) return;
+        
+        List<ulong> unfinishedPlayers = new List<ulong>();
+        
+        foreach (ulong clientId in NetworkManager.Singleton.ConnectedClientsIds)
+        {
+            bool hasFinished = playersFinished.ContainsKey(clientId) && playersFinished[clientId];
+            
+            if (!hasFinished)
+            {
+                unfinishedPlayers.Add(clientId);
+            }
+        }
+        
+        if (unfinishedPlayers.Count > 0)
+        {
+            foreach (ulong loserId in unfinishedPlayers)
+            {
+                gameEndedDueToTimeout.Value = true;
+                timeoutLoserId.Value = loserId;
+                
+                PlayerTimeoutClientRpc(loserId);
+            }
+        }
+        else
+        {
+            AllPlayersFinishedClientRpc();
         }
     }
 } 

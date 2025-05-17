@@ -201,6 +201,27 @@ public class OpponentGridVisualizer : MonoBehaviour
         visualGridSquares.Clear();
     }
 
+    public void ResetVisualGridToWhite()
+    {
+        foreach (var square in visualGridSquares)
+        {
+            if (square == null) continue;
+            
+            GridSquare gridSquare = square.GetComponent<GridSquare>();
+            if (gridSquare != null)
+            {
+                // Use only ClearOccupied() which will reset to default color, like in hammer's ClearArea
+                gridSquare.ClearOccupied();
+                
+                // Clear sprite from normalImage if it exists
+                if (gridSquare.normalImage != null)
+                {
+                    gridSquare.normalImage.sprite = null;
+                }
+            }
+        }
+    }
+
     public void UpdateVisualGrid(List<GridStateManager.GridSquareState> gridState)
     {
         if (visualGridSquares.Count != rows * columns)

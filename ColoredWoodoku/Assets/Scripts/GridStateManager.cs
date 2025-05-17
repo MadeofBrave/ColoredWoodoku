@@ -516,6 +516,32 @@ public class GridStateManager : NetworkBehaviour
         visualGridSquares.Clear();
     }
     
+    private void ResetVisualGridToWhite()
+    {
+        foreach (var square in visualGridSquares)
+        {
+            if (square == null) continue;
+            
+            // Check for GridSquare component first
+            GridSquare gridSquare = square.GetComponent<GridSquare>();
+            if (gridSquare != null)
+            {
+                // Use ClearOccupied to reset to default color, like in hammer's ClearArea
+                gridSquare.ClearOccupied();
+            }
+            else
+            {
+                // For squares without GridSquare component, just clear the sprite
+                UnityEngine.UI.Image squareImage = square.GetComponent<UnityEngine.UI.Image>();
+                if (squareImage != null)
+                {
+                    squareImage.sprite = null;
+                    // Use a more visible color (less transparency)
+                    squareImage.color = Color.white;
+                }
+            }
+        }
+    }
 
     public void LocalPlayerFinishedPlacingShapes()
     {
