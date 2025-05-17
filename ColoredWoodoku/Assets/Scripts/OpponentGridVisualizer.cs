@@ -210,10 +210,8 @@ public class OpponentGridVisualizer : MonoBehaviour
             GridSquare gridSquare = square.GetComponent<GridSquare>();
             if (gridSquare != null)
             {
-                // Use only ClearOccupied() which will reset to default color, like in hammer's ClearArea
                 gridSquare.ClearOccupied();
                 
-                // Clear sprite from normalImage if it exists
                 if (gridSquare.normalImage != null)
                 {
                     gridSquare.normalImage.sprite = null;
